@@ -47,7 +47,8 @@ go install github.com/pron-get/pron-get/cmd/pron-get@latest
 For `pron-cache`, link it to the same binary:
 `ln -s "$(command -v pron-get)" /usr/local/bin/pron-cache`.
 
-Read the manual without installing it: `man ./man/pron-get.1`
+Read the manual without installing it: `man ./man/pron-get.1`, or open
+[docs/pron-get.1.html](docs/pron-get.1.html) in a browser.
 
 ## Commands
 
@@ -141,6 +142,7 @@ The only cookie it sets is the click-through "I am 18+" disclaimer.
 ## Development
 
 ```
+go run ./tools/manhtml -version 0.7.0 > docs/pron-get.1.html   # after editing man/pron-get.1
 go test -race ./...
 PRON_GET_LIVE=1 go test ./internal/tor ./internal/pornhub -run Live -v   # real network
 ```

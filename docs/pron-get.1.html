@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>pron-get(1)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans+Condensed:wght@600&display=swap">
+<style>
+/* One xterm-style window on an X11 root-weave desktop; the text is mandoc's
+   own output, line for line. Single-theme on purpose: it is a picture of a
+   terminal. */
+:root {
+  --desk-a: #9a9893;      /* root weave, light thread */
+  --desk-b: #85837e;      /* root weave, dark thread */
+  --chrome: #d4d1ca;      /* window frame */
+  --chrome-hi: #f2f0ea;   /* bevel highlight */
+  --chrome-lo: #807d76;   /* bevel shadow */
+  --title: #3d4a5c;       /* focused title bar */
+  --title-ink: #f4f2ec;
+  --paper: #fdfdfc;       /* terminal background */
+  --ink: #141414;         /* terminal text */
+  --muted: #3a3935;
+  --mono: "IBM Plex Mono", Menlo, "DejaVu Sans Mono", Consolas, monospace;
+  --ui: "IBM Plex Sans Condensed", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+html { background: var(--desk-b); }
+body {
+  margin: 0;
+  background-color: var(--desk-a);
+  background-image:
+    repeating-linear-gradient(45deg, var(--desk-b) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(-45deg, var(--desk-b) 0 1px, transparent 1px 4px);
+  color: var(--ink);
+  min-height: 100vh;
+  padding-block: 40px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.window {
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  background: var(--chrome);
+  border: 2px solid;
+  border-color: var(--chrome-hi) var(--chrome-lo) var(--chrome-lo) var(--chrome-hi);
+  padding: 4px;
+  box-shadow: 6px 8px 0 rgba(30, 29, 26, .35);
+  box-sizing: border-box;
+}
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--title);
+  color: var(--title-ink);
+  font: 600 13px/1 var(--ui);
+  letter-spacing: .02em;
+  padding: 4px 4px 4px 8px;
+  margin-bottom: 4px;
+}
+.titlebar .name { flex: 1; min-width: 0; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn {
+  width: 16px; height: 14px; flex: none;
+  background: var(--chrome);
+  border: 2px solid;
+  border-color: var(--chrome-hi) var(--chrome-lo) var(--chrome-lo) var(--chrome-hi);
+  box-sizing: border-box;
+  position: relative;
+}
+.btn.menu::after { content: ""; position: absolute; left: 2px; right: 2px; top: 3px; height: 2px; background: var(--muted); }
+.btn.min::after  { content: ""; position: absolute; left: 4px; top: 3px; width: 4px; height: 4px; border: 1px solid var(--muted); }
+.btn.max::after  { content: ""; position: absolute; left: 1px; top: 1px; right: 1px; bottom: 1px; border: 1px solid var(--muted); }
+.screen {
+  background: var(--paper);
+  border: 2px solid;
+  border-color: var(--chrome-lo) var(--chrome-hi) var(--chrome-hi) var(--chrome-lo);
+  overflow-x: auto;
+}
+pre {
+  margin: 0;
+  padding: 10px 12px 0;
+  font: 400 13px/1.38 var(--mono);
+  color: var(--ink);
+  tab-size: 8;
+  width: max-content;
+}
+pre .b { font-weight: 700; }
+pre .u { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.status {
+  display: block;
+  margin: 6px 12px 10px;
+  width: fit-content;
+  background: var(--ink);
+  color: var(--paper);
+  font: 400 13px/1.38 var(--mono);
+  white-space: pre;
+}
+.caption {
+  margin: 0;
+  font: 400 12px/1.4 var(--mono);
+  color: var(--title-ink);
+  background: rgba(40, 39, 36, .78);
+  padding: 4px 10px;
+  max-width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+}
+.caption b { font-weight: 700; }
+@media (max-width: 520px) {
+  body { padding-block: 20px 28px; }
+  pre, .status { font-size: 11.5px; }
+}
+</style>
+</head>
+<body>
+<div class="window" role="figure" aria-label="The pron-get(1) manual page in a terminal">
+  <div class="titlebar" aria-hidden="true">
+    <span class="btn menu"></span>
+    <span class="name">xterm — man pron-get</span>
+    <span class="btn min"></span>
+    <span class="btn max"></span>
+  </div>
+  <div class="screen">
+<pre>
+PRON-GET(1)                 General Commands Manual                PRON-GET(1)
+
+<span class="b">NAME</span>
+     <span class="b">pron-get</span>, <span class="b">pron-cache</span> - apt-style package manager for porn, over Tor
+
+<span class="b">SYNOPSIS</span>
+     <span class="b">pron-get</span> <span class="b">search</span> [<span class="b">-page</span> <span class="u">n</span>] <span class="u">words</span> <span class="u">...</span> | <span class="u">listing-url</span>
+     <span class="b">pron-get</span> <span class="b">show</span> <span class="u">package</span> | <span class="u">url</span>
+     <span class="b">pron-get</span> <span class="b">install</span> [<span class="b">-q</span> <span class="u">height</span>] [<span class="b">-hls</span>] [<span class="b">-j</span> <span class="u">n</span>] [<span class="b">-limit</span> <span class="u">n</span>] [<span class="b">-search</span> <span class="u">words</span>]
+              [<span class="b">-y</span>] <span class="u">package</span> | <span class="u">url</span> | <span class="u">listing-url</span> <span class="u">...</span>
+     <span class="b">pron-get</span> <span class="b">remove</span> [<span class="b">-y</span>] <span class="u">package</span> <span class="u">...</span>
+     <span class="b">pron-get</span> <span class="b">update</span>
+     <span class="b">pron-get</span> <span class="b">upgrade</span> [<span class="b">-q</span> <span class="u">height</span>] [<span class="b">-j</span> <span class="u">n</span>] [<span class="b">-limit</span> <span class="u">n</span>] [<span class="b">-y</span>]
+     <span class="b">pron-get</span> <span class="b">list</span> [<span class="b">-upgradable</span>]
+     <span class="b">pron-get</span> <span class="b">add-source</span> <span class="u">listing-url</span> | <span class="b">search</span> <span class="u">words</span> [<span class="b">limit=</span><span class="u">n</span>]
+     <span class="b">pron-get</span> <span class="b">edit-sources</span>
+     <span class="b">pron-get</span> <span class="b">torcheck</span>
+     <span class="b">pron-get</span> <span class="b">moo</span>
+
+     <span class="b">pron-cache</span> <span class="b">search</span> <span class="u">regex</span> | <span class="b">show</span> <span class="u">package</span> | <span class="b">pkgnames</span> | <span class="b">stats</span>
+
+<span class="b">DESCRIPTION</span>
+     <span class="b">pron-get</span> is a simple command line interface for downloading and
+     installing video packages.  It works almost like Debian&#39;s apt-get(8),
+     except that a <span class="u">package</span> is one video, named by its viewkey, and the <span class="u">archive</span>
+     is the website.  The most frequently used commands are <span class="b">update</span> and
+     <span class="b">upgrade</span>.
+
+     Every request goes through Tor.  If no Tor SOCKS proxy is running,
+     <span class="b">pron-get</span> starts a private tor(1) and stops it on exit.  Before any
+     request reaches the site, check.torproject.org must confirm that traffic
+     leaves through a Tor exit; otherwise <span class="b">pron-get</span> refuses to continue and
+     nothing is sent.
+
+     Installed packages live in <span class="u">~/pr0n/package/</span>, one directory per video,
+     holding the video file and a <span class="u">pkg.json</span> manifest with its title, source,
+     size and SHA-256.  Interrupted downloads keep a <span class="u">.part</span> file and resume
+     where they stopped.
+
+<span class="b">COMMANDS</span>
+     <span class="b">search</span> <span class="u">words</span> <span class="u">...</span>
+                   Search the site and print one package per line: an
+                   installed mark (<span class="b">i</span>), the package name, the duration and the
+                   title.  <span class="b">-page</span> <span class="u">n</span> shows later result pages.
+
+     <span class="b">search</span> <span class="u">listing-url</span>
+                   List the videos on a model, pornstar, channel, user,
+                   playlist or category page, following its pages up to <span class="b">-limit</span>
+                   <span class="u">n</span> results (default 100, <span class="b">0</span> for all).
+
+     <span class="b">show</span> <span class="u">package</span>  Print the title, uploader, duration, homepage, install
+                   status and every available version (quality and format) of
+                   a package.
+
+     <span class="b">install</span> <span class="u">package</span> <span class="u">...</span>
+                   Download packages.  Arguments may be viewkeys, video URLs,
+                   or listing URLs, which are expanded into the newest <span class="b">-limit</span>
+                   <span class="u">n</span> videos of each (default 3, <span class="b">0</span> for all).  <span class="b">-search</span> <span class="u">words</span>
+                   adds the results of a search.  When listings are involved,
+                   the packages to install are shown first and <span class="b">pron-get</span> asks
+                   before downloading.  Installing a package by name clears an
+                   earlier <span class="b">remove</span>.
+
+     <span class="b">remove</span> <span class="u">package</span> <span class="u">...</span>
+                   Delete packages after showing how much space is freed.
+                   Removed packages are remembered, so <span class="b">upgrade</span> does not bring
+                   them back.
+
+     <span class="b">update</span>        Fetch every source in sources.list(5) and rebuild the
+                   package index.  Each source is fetched on its own Tor
+                   circuit.  A source that fails keeps its previous index
+                   entries.
+
+     <span class="b">upgrade</span>       Install every package in the index that is neither
+                   installed nor removed.  The list is shown, and confirmed,
+                   before any network traffic.  <span class="b">-limit</span> <span class="u">n</span> installs at most <span class="u">n</span>
+                   packages.
+
+     <span class="b">list</span>          List installed packages, newest first.  With <span class="b">-upgradable</span>,
+                   list what <span class="b">upgrade</span> would install instead.
+
+     <span class="b">add-source</span> <span class="u">source</span>
+                   Check a source and append it to <span class="u">sources.list</span>.
+
+     <span class="b">edit-sources</span>  Open <span class="u">sources.list</span> in VISUAL, EDITOR, or vi(1), then check
+                   it.
+
+     <span class="b">cache</span> <span class="u">command</span>
+                   The same as <span class="b">pron-cache</span>.
+
+     <span class="b">torcheck</span>      Connect to Tor and print the exit address that would be
+                   used.
+
+     <span class="b">moo</span>           Has Super Cow Powers.
+
+   <span class="b">pron-cache</span>
+     <span class="b">pron-cache</span> queries the package index offline, like apt-cache(8).  It is
+     the same binary: a symbolic link named <span class="b">pron-cache</span> runs <span class="b">pron-get</span> <span class="b">cache</span>.
+
+     <span class="b">search</span> <span class="u">regex</span>
+               Print index entries whose name, title or source matches the
+               case-insensitive <span class="u">regex</span>.  Installed packages are marked <span class="b">i</span>,
+               removed ones <span class="b">r</span>.
+
+     <span class="b">show</span> <span class="u">package</span>
+               Print what the index knows about a package.
+
+     <span class="b">pkgnames</span>  Print every package name in the index.
+
+     <span class="b">stats</span>     Print counts of indexed, installed, upgradable and removed
+               packages, the number of sources, and the age of the index.
+
+<span class="b">OPTIONS</span>
+     These options are accepted by every command:
+
+     <span class="b">-dir</span> <span class="u">dir</span>       Where packages are installed.  Default: <span class="u">~/pr0n</span>.
+
+     <span class="b">-tor</span> <span class="u">host</span>:<span class="u">port</span>
+                    Use this Tor SOCKS proxy.  By default <span class="b">pron-get</span> tries
+                    127.0.0.1:9050 (a system tor) and 127.0.0.1:9150 (Tor
+                    Browser), then starts its own.
+
+     <span class="b">-tor-bin</span> <span class="u">path</span>  The tor(1) binary to start when no proxy is running.
+
+     <span class="b">-sources</span> <span class="u">file</span>  The sources.list(5) to use.
+
+     <span class="b">-index</span> <span class="u">file</span>    The package index to use.
+
+     <span class="b">-site</span> <span class="u">url</span>      The site&#39;s base URL.  Default: https://www.pornhub.com.
+
+     <span class="b">-onion</span>         Use the site&#39;s onion service instead of a Tor exit.
+
+     Options for <span class="b">install</span> and <span class="b">upgrade</span>:
+
+     <span class="b">-q</span> <span class="u">height</span>      Highest quality to fetch, for example <span class="b">720</span>.  Default: the
+                    best available.  If nothing is that small, the smallest
+                    version is used.
+
+     <span class="b">-hls</span>           Prefer the HLS stream over the single MP4 file.  HLS
+                    streams are remuxed to MP4 with ffmpeg(1) when it is
+                    installed, and saved as MPEG-TS otherwise.
+
+     <span class="b">-j</span> <span class="u">n</span>           Run <span class="u">n</span> downloads in parallel (at most 8).  Each job has its
+                    own Tor client and circuits.
+
+     <span class="b">-y</span>             Assume yes; do not prompt.
+
+<span class="b">SOURCES.LIST</span>
+     One source per line.  A source is a listing URL or <span class="b">search</span> followed by
+     words.  A trailing <span class="b">limit=</span><span class="u">n</span> sets how many of the newest videos are indexed
+     from it (default 40, <span class="b">0</span> for all).  <span class="b">#</span> starts a comment.
+
+           https://www.pornhub.com/model/example-model
+           https://www.pornhub.com/playlist/123456789 limit=100
+           search oil massage limit=20
+
+<span class="b">PRIVACY</span>
+     <span class="b">+</span>   Tor or nothing: no request is made without a confirmed Tor exit, and
+         HTTP_PROXY, HTTPS_PROXY and any system <span class="u">torrc</span> are ignored.
+
+     <span class="b">+</span>   No DNS leaks: hostnames are resolved inside Tor.  The private tor
+         runs with <span class="b">SafeSocks</span> <span class="b">1</span>, which refuses any request that would need a
+         local lookup.
+
+     <span class="b">+</span>   Unlinkable: every installed video, every <span class="b">update</span> source and every
+         parallel job uses a fresh circuit (<span class="b">IsolateSOCKSAuth</span>), so the site
+         sees each from a different exit.
+
+     <span class="b">+</span>   Tor Browser&#39;s User-Agent; cookies live in memory and die with the
+         process.
+
+     <span class="b">pron-get</span> does not protect what is on your disk: <span class="u">~/pr0n</span> is ordinary files.
+     The site still sees what is downloaded, just not by whom.
+
+<span class="b">ENVIRONMENT</span>
+     XDG_CONFIG_HOME  If set, sources.list is read from
+                      <span class="u">$XDG</span><span class="b">_</span><span class="u">CONFIG</span><span class="b">_</span><span class="u">HOME/pron-get/</span>.
+
+     VISUAL, EDITOR   Editor for <span class="b">edit-sources</span>.
+
+<span class="b">FILES</span>
+     <span class="u">~/.config/pron-get/sources.list</span>
+             Sources for <span class="b">update</span>; created with examples on first use.
+     <span class="u">~/Library/Caches/pron-get/index.json</span>
+             The package index built by <span class="b">update</span>.
+     <span class="u">~/Library/Caches/pron-get/tor/</span>
+             State of the private tor (guards and consensus), kept so later
+             runs start quickly.
+     <span class="u">~/pr0n/package/pkg.json</span>
+             Manifest of an installed package.
+     <span class="u">~/pr0n/.removed</span>
+             Packages that <span class="b">upgrade</span> skips.
+
+<span class="b">EXIT</span> <span class="b">STATUS</span>
+     The <span class="b">pron-get</span> utility exits 0 on success, and &gt;0 if an error occurs.
+     Usage errors exit with 1, bad options with 2, and failures with 100, like
+     apt-get(8).  Interrupting a download exits with 130 and keeps the partial
+     file.
+
+<span class="b">EXAMPLES</span>
+     Find something and install it at 720p:
+
+           $ pron-get search oil massage
+           $ pron-get install -q 720 6a0123456789a
+
+     Install the 10 newest videos of a model, three at a time:
+
+           $ pron-get install -j 3 -limit 10 \
+                 https://www.pornhub.com/model/example-model
+
+     Follow a playlist and keep up with it:
+
+           $ pron-get add-source https://www.pornhub.com/playlist/123456789
+           $ pron-get update &amp;&amp; pron-get upgrade -j 3
+
+     Search the index offline:
+
+           $ pron-cache search &#39;massage|spa&#39;
+
+<span class="b">DIAGNOSTICS</span>
+     Tor check failed, refusing to continue
+             Tor could not be reached, or check.torproject.org did not see a
+             Tor exit.  Nothing was sent to the site.
+
+     media URL is bound to a different exit IP
+             Video links are signed for one IP address, and some Tor exits
+             send traffic from several.  <span class="b">pron-get</span> resolves the video again on
+             a new circuit and resumes.
+
+     the site demands age verification from this exit
+             The exit&#39;s country requires age verification.  <span class="b">pron-get</span> does not
+             bypass it; try again later from another exit.
+
+     video is not available in the Tor exit&#39;s country
+             The video is geo-blocked where the exit is.
+
+<span class="b">SEE</span> <span class="b">ALSO</span>
+     ffmpeg(1), tor(1), torsocks(1), apt-cache(8), apt-get(8)
+
+<span class="b">HISTORY</span>
+     <span class="b">porn-get</span> was written by tarzeau on 27 June 2001 &#34;just for the fun of it&#34;
+     as the package manager of the joke distribution Lesbian GNU/Linux.  It
+     was a bash script on top of lynx(1) and wget(1).  pl0pix rewrote it in
+     2003 as version 0.5.1, the last release.  <span class="b">pron-get</span> picks up the version
+     numbering at 0.6.0.  The surviving releases are archived in <span class="u">history/</span> in
+     the source tree.
+
+<span class="b">AUTHORS</span>
+     tarzeau wrote porn-get in 2001 with &#34;the PORN team&#34;;
+     pl0pix rewrote it in 2003.  <span class="b">pron-get</span> is by the pron-get contributors,
+     2026.
+
+<span class="b">BUGS</span>
+     Only public videos are supported.  Premium, private and locked videos are
+     reported, not downloaded.
+
+     The site&#39;s onion service was offline in November 2026, so <span class="b">-onion</span> may not
+     work.
+
+     The CDN limits each download to about 500 kB/s; use <span class="b">-j</span>.
+
+     This manpage has been started.
+
+pron-get 0.7.0                 November 8, 2026                    PRON-GET(1)
+</pre>
+<span class="status"> Manual page pron-get(1) line 1 (press h for help or q to quit)</span>
+  </div>
+</div>
+<p class="caption"><b>pron-get 0.7.0</b> · apt-get for porn, over Tor · after porn-get (2001)</p>
+</body>
+</html>
