@@ -3,6 +3,8 @@
 An `apt-get` style downloader for porn, over Tor. A tribute to
 [porn-get](HISTORY.md) (2001), rebuilt in Go.
 
+Website: https://pron-get.github.io/pron-get/ . Manual: [pron-get(1)](https://pron-get.github.io/pron-get/pron-get.1.html)
+
 ```
 $ pron-get search massage
 Hit:1 tor 127.0.0.1:49685 exit 185.220.100.251
@@ -47,8 +49,8 @@ go install github.com/pron-get/pron-get/cmd/pron-get@latest
 For `pron-cache`, link it to the same binary:
 `ln -s "$(command -v pron-get)" /usr/local/bin/pron-cache`.
 
-Read the manual without installing it: `man ./man/pron-get.1`, or open
-[docs/pron-get.1.html](docs/pron-get.1.html) in a browser.
+Read the manual without installing it: `man ./man/pron-get.1`, or
+[online](https://pron-get.github.io/pron-get/pron-get.1.html).
 
 ## Commands
 

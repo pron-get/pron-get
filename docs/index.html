@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pron-get</title>
+<meta name="description" content="pron-get: apt-get for porn, over Tor. A Go rewrite of porn-get (2001).">
+<style>
+/* 2001 homepage: white page, grey Verdana, a centred table, links the same
+   grey as the text. No web fonts, no images: everything is text and CSS. */
+:root {
+  --page: #ffffff;
+  --ink: #444444;      /* the text= and link= colour of 2001 */
+  --dim: #888888;
+  --rule: #cccccc;
+  --box: #f3f3f3;
+  --hot: #cc0000;      /* "new!" */
+  --tor: #7d4698;      /* tor purple, for the one button */
+  --go: #00add8;
+  color-scheme: light;
+}
+html { background: var(--page); }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 13px/1.5 Verdana, Tahoma, Geneva, sans-serif;
+  padding-block: 18px 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+a, a:visited { color: var(--ink); }
+a:hover { color: #000; background: #ffffcc; }
+a:focus-visible { outline: 1px dotted #000; outline-offset: 1px; }
+.page { max-width: 640px; margin: 0 auto; }
+table.main { width: 100%; border-collapse: collapse; }
+h1 { font: bold 22px/1.2 Verdana, sans-serif; margin: 0; letter-spacing: -.5px; }
+h1 small { font-size: 11px; font-weight: normal; letter-spacing: 0; color: var(--dim); }
+h2 { font: bold 14px Verdana, sans-serif; margin: 22px 0 6px; border-bottom: 1px dashed var(--rule); padding-bottom: 2px; }
+p { margin: 0 0 10px; }
+pre, code { font: 12px/1.45 "Courier New", Courier, monospace; }
+.scroll { overflow-x: auto; }
+pre.box { background: var(--box); border: 1px solid var(--rule); padding: 6px 8px; margin: 4px 0 10px; }
+.cow { float: right; margin: 0 0 6px 12px; color: var(--dim); }
+.age {
+  border: 1px solid var(--ink); padding: 4px 8px; margin: 0 0 12px;
+  font-size: 11px; text-align: center; background: var(--box);
+}
+.ticker { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); overflow: hidden; white-space: nowrap; margin: 10px 0 14px; font-size: 11px; }
+.ticker span { display: inline-block; padding-left: 100%; animation: ticker 28s linear infinite; }
+@keyframes ticker { to { transform: translateX(-100%); } }
+@media (prefers-reduced-motion: reduce) {
+  .ticker span { animation: none; padding-left: 0; white-space: normal; }
+}
+.new { color: var(--hot); font-weight: bold; font-size: 10px; }
+ul.dots { list-style: none; padding: 0; margin: 0 0 10px; }
+ul.dots li { margin: 2px 0; }
+ul.dots li::before { content: ". "; color: var(--dim); }
+table.dl { border-collapse: collapse; margin: 4px 0 10px; font-size: 12px; }
+table.dl td { border: 1px solid var(--rule); padding: 2px 8px; }
+table.dl td:first-child { background: var(--box); }
+.construction {
+  height: 10px; margin: 18px 0 6px;
+  background: repeating-linear-gradient(45deg, #ffcc00 0 10px, #222 10px 20px);
+}
+.cons-text { text-align: center; font-size: 11px; color: var(--dim); }
+.buttons { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 16px 0 10px; }
+.b88 {
+  width: 88px; height: 31px; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font: bold 9px/1.05 Verdana, sans-serif; text-transform: uppercase; letter-spacing: .3px;
+  text-decoration: none; border: 1px solid #000;
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,.6), inset -1px -1px 0 rgba(0,0,0,.35);
+}
+a.b88:hover { background-image: none; filter: brightness(1.1); }
+.b88.tor { background: var(--tor); color: #fff; }
+.b88.go { background: var(--go); color: #fff; }
+.b88.gpl { background: #a42e2b; color: #fff; }
+.b88.any { background: #fff; color: #000; }
+.b88.tux { background: #000; color: #ffcc00; }
+.b88.moo { background: #ffffff; color: #000; border-style: dashed; }
+.counter { text-align: center; font-size: 11px; color: var(--dim); margin-top: 10px; }
+.counter .digits { display: inline-block; background: #000; color: #3f3; font: bold 13px "Courier New", monospace; padding: 1px 4px; letter-spacing: 2px; }
+.foot { text-align: center; font-size: 10px; color: var(--dim); margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<p class="age">this site is about software for downloading adult videos.
+not 18 yet? this page isn't for you, close the tab.</p>
+
+<table class="main" role="presentation"><tr><td>
+
+<pre class="cow" aria-hidden="true">         (__)
+         (oo)
+   /------\/
+  / |    ||
+ *  /\---/\
+    ~~   ~~</pre>
+
+<h1>pron-get <small>v0.7.0 . apt-get for porn, over tor</small></h1>
+
+<div class="ticker" aria-hidden="true"><span>
+<b>*** new!</b> pron-get 0.7.0 is out . now with sources.list, update and upgrade . every request goes through tor . resumes downloads . parallel downloads with -j . has super cow powers ***
+</span></div>
+
+<p>remember <a href="https://github.com/pron-get/pron-get/blob/main/HISTORY.md">porn-get</a>?
+in 2001 someone wrote a bash script that made downloading porn feel like
+<code>apt-get</code>. it used lynx and wget and it really worked. pron-get is the same
+idea rebuilt in go for 2026: same verbs, same jokes, but it talks to the site
+through <a href="https://www.torproject.org/">tor</a> so the site never sees your ip.</p>
+
+<h2>what is it <span class="new">new!</span></h2>
+<div class="scroll"><pre class="box">$ pron-get search oil massage
+$ pron-get install -q 720 &lt;viewkey&gt;
+$ pron-get add-source https://www.pornhub.com/model/example-model
+$ pron-get update &amp;&amp; pron-get upgrade -j 3
+$ pron-get moo</pre></div>
+<ul class="dots">
+  <li>works like apt: <b>search</b>, <b>install</b>, <b>remove</b>, <b>update</b>, <b>upgrade</b>, <b>list</b></li>
+  <li>tor or nothing: no request leaves without a confirmed tor exit, no dns outside tor</li>
+  <li>a fresh tor circuit for every video, so downloads can't be tied together</li>
+  <li>interrupted downloads resume where they stopped</li>
+  <li>follows models, channels, playlists and searches through a <code>sources.list</code></li>
+  <li><b>pron-cache</b> searches what you've indexed, offline</li>
+</ul>
+
+<h2>download</h2>
+<p>homebrew (mac, linux):</p>
+<div class="scroll"><pre class="box">brew install pron-get/tap/pron-get</pre></div>
+<p>or grab a binary, <a href="https://github.com/pron-get/pron-get/releases/latest">latest release</a>:</p>
+<div class="scroll">
+<table class="dl">
+  <tr><td>macos</td>
+      <td><a href="https://github.com/pron-get/pron-get/releases/download/v0.7.0/pron-get_0.7.0_darwin_arm64.tar.gz">arm64</a></td>
+      <td><a href="https://github.com/pron-get/pron-get/releases/download/v0.7.0/pron-get_0.7.0_darwin_amd64.tar.gz">intel</a></td></tr>
+  <tr><td>linux</td>
+      <td><a href="https://github.com/pron-get/pron-get/releases/download/v0.7.0/pron-get_0.7.0_linux_amd64.tar.gz">amd64</a></td>
+      <td><a href="https://github.com/pron-get/pron-get/releases/download/v0.7.0/pron-get_0.7.0_linux_arm64.tar.gz">arm64</a></td></tr>
+  <tr><td>freebsd</td>
+      <td><a href="https://github.com/pron-get/pron-get/releases/download/v0.7.0/pron-get_0.7.0_freebsd_amd64.tar.gz">amd64</a></td>
+      <td><a href="https://github.com/pron-get/pron-get/releases/download/v0.7.0/pron-get_0.7.0_freebsd_arm64.tar.gz">arm64</a></td></tr>
+  <tr><td>source</td>
+      <td><a href="https://github.com/pron-get/pron-get/releases/download/v0.7.0/pron-get-0.7.0.tar.gz">tar.gz</a></td>
+      <td><a href="https://github.com/pron-get/pron-get/releases/download/v0.7.0/checksums.txt">sha256</a></td></tr>
+</table>
+</div>
+<p>or with go: <code>go install github.com/pron-get/pron-get/cmd/pron-get@latest</code><br>
+you need <code>tor</code> installed. <code>ffmpeg</code> is nice to have.</p>
+
+<h2>stuff</h2>
+<ul class="dots">
+  <li><a href="pron-get.1.html">pron-get(1)</a> . the manpage, in a nice xterm</li>
+  <li><a href="https://github.com/pron-get/pron-get">source code</a> . it's on github, gpl v2 or later</li>
+  <li><a href="https://github.com/pron-get/pron-get/blob/main/README.md">readme</a> . how it all works, privacy model included</li>
+  <li><a href="https://github.com/pron-get/pron-get/blob/main/CHANGELOG.md">changelog</a> . what's new</li>
+  <li><a href="https://github.com/pron-get/pron-get/blob/main/HISTORY.md">history</a> . the story of porn-get, 2001&ndash;2003</li>
+  <li><a href="https://github.com/pron-get/pron-get/tree/main/history">old releases</a> . the original bash scripts, archived</li>
+  <li><a href="https://github.com/pron-get/homebrew-tap">homebrew tap</a> . the formula</li>
+  <li><a href="https://github.com/pron-get/pron-get/issues">report a bug</a> . or say hi</li>
+</ul>
+
+<h2>faq</h2>
+<p><b>q: is this for real?</b><br>a: yes. it's a joke that actually works, which was the whole point in 2001 too.</p>
+<p><b>q: what does it download?</b><br>a: public videos only. premium, private and locked videos, geo-blocks and age checks get reported, never bypassed.</p>
+<p><b>q: does tor make me invisible?</b><br>a: to the site, mostly. your own disk still has the files on it.</p>
+
+<div class="construction" aria-hidden="true"></div>
+<p class="cons-text">this page is under construction (since 2001)</p>
+
+<nav class="buttons" aria-label="badges">
+  <a class="b88 tor" href="https://www.torproject.org/">powered by<br>tor</a>
+  <a class="b88 go" href="https://go.dev/">made with<br>go</a>
+  <a class="b88 gpl" href="https://github.com/pron-get/pron-get/blob/main/LICENSE">gnu gpl<br>v2+</a>
+  <a class="b88 tux" href="https://github.com/pron-get/pron-get/releases/latest">runs on<br>linux &amp; bsd</a>
+  <a class="b88 any" href="https://github.com/pron-get/pron-get">best viewed<br>with any browser</a>
+  <a class="b88 moo" href="pron-get.1.html">has super<br>cow powers</a>
+</nav>
+
+<p class="counter">you are visitor <span class="digits">??????</span> . the counter cgi broke in 2003</p>
+<p class="foot">best viewed at 800x600 . last updated 08-nov-2026 .
+<a href="https://github.com/pron-get/pron-get">github.com/pron-get/pron-get</a></p>
+
+</td></tr></table>
+</div>
+</body>
+</html>

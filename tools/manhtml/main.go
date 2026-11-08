@@ -202,6 +202,8 @@ pre .u { text-decoration: underline; text-decoration-thickness: 1px; text-underl
   text-align: center;
 }
 .caption b { font-weight: 700; }
+.caption a { color: inherit; text-underline-offset: 2px; }
+.caption a:hover, .caption a:focus-visible { color: #fff; outline: 1px dotted currentColor; outline-offset: 2px; }
 @media (max-width: 520px) {
   body { padding-block: 20px 28px; }
   pre, .status { font-size: 11.5px; }
@@ -223,5 +225,5 @@ const bodyTemplate = `<div class="window" role="figure" aria-label="The pron-get
 <span class="status"> Manual page pron-get(1) line 1 (press h for help or q to quit)</span>
   </div>
 </div>
-<p class="caption"><b>pron-get @@VERSION@@</b> · apt-get for porn, over Tor · after porn-get (2001)</p>
+<p class="caption"><a href="https://pron-get.github.io/pron-get/"><b>pron-get @@VERSION@@</b></a> · apt-get for porn, over Tor · <a href="https://github.com/pron-get/pron-get">github.com/pron-get/pron-get</a></p>
 `
