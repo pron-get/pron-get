@@ -1,0 +1,99 @@
+
+19:12:34 <Deep6> but now thanks to porn-get I can
+         look like I am hacking scripts  when I am actually getting porn
+
+porn-get version 0.2.3, lesbian gnu/linux
+(this needs bash, wget and lynx)
+(sexual education is important for humanity)
+(this is gpl)
+
+what already works is
+porn-get install somepackage
+porn-get update
+porn-get remove somepackage
+porn-get share boobies http://www.myserver.com/jenny/ .mpeg
+porn-cache search somepackage
+porn-cache pkgnames
+porn-cache stats
+
+most packages contributed by
+marc from www.computec.ch (german pages)
+some more from tinus
+
+craigo from #e on irc and www.wizball.co.uk
+made the great "porn-get into it" banner
+
+package contributions welcome (or use porn-get share)
+send them to gnu@fuckmicrosoft.com
+
+---
+
+i should delete files < 5k (as they seem be 404 error .html files
+or thumbnails)
+
+to view sizes of installed packages
+du -h |sed "sc./ccg" |awk '{printf("%6s %s\n",$1,$2)}'
+
+to install all packages
+for a in `./porn-cache search |awk '{print $1}'`; do
+    ./porn-get install $a
+done
+
+to install all packages containing lesbian stuff
+for a in `./porn-cache search lesbian |awk '{print $1}'`; do
+    ./porn-get install $a
+done
+
+to delete all empty directories
+for a in `find -empty`; do rm -r $a; done
+
+things to do...
+- add descriptionfield into porn.conf (maybe?)
+- remove dead packages (links)
+- list contents of package, like files and sizes?
+- trap ctrl-c (SIGINT), man builtins (trap "somestuff" signalnum signalnum)
+- delete banners (filesize < 10k or something) (du directory |awk '{print $1}')
+- compatiblity list? tested in linux, does it werk with bsd?
+  windows? solaris? beos? others?
+- maybe add dependency? if someone installs a package "lesbian*" it asks
+  to install other lesbians* packages...
+  or do task-packages...
+- .porn.conf (for users)
+- add check if porn.conf is there
+
+some quotes from different channels from opn (irc.linux.com)
+(#windowmaker, #e, #suse...)
+19:11:12 <Deep6> tarzeau I think we should break it down into "actress's" 
+         as well :) porn-get install jenna\ jameson
+19:22:50 <StevenK>  /usr/share/porn/
+19:23:04 <StevenK> Because porn was meant to be shared.
+19:23:11 <StevenK> And you can quote me on that. ;-)
+18:58:18 <StevenK> tarzeau: porn-get looks cool, you rock.
+19:00:09 <joshua> porn-get boobies (ed. note: porn-get install boobies)
+19:12:34 <Deep6> but now thanks to porn-get I can
+         look like I am hacking scripts  when I am actually getting porn
+19:13:01 <Deep6> thanks porn-get! (Big Cheesy Commercial smile) you changed
+         my life!!!
+20:28:36 <XWolf> ach du bist der mit pornget
+         (translation: ah it's you who made porn-get)
+22:50:16 <Craigo> that porn-get cracks me up
+12:21:12 <OldHead> Lesbian Linux?
+12:21:22 <OldHead> damn, and I thought I had all the distro's
+00:49:35 <Rigel> tarzeau: "if you fsck this girl in a different way than
+         the one seen in this video, please publish it for free to the
+	 whole GPL porn community"
+23:23:32 <KevinX> tarzeau: Haha, that is shit funny, you took your time
+         to make a porn grabbing clone of apt haha
+
+http://www.linuxforlesbians.org/article.php?id=18
+http://plebian.com/g/scriptarchive/view/28
+http://www.badvogato.org/proj/pornstar/
+http://dmoz.org/Computers/Software/Operating_Systems/Linux/Distributions/Debian/
+http://www.linuxnewbie.org/cgi-bin/ubbcgi/ultimatebb.cgi?ubb=get_topic&f=6&t=004461
+http://www.kuro5hin.org/comments/2001/8/8/53543/46803?pid=134#137
+http://leshrac.dyndns.org/view_post.asp?id_forum=4752
+http://www.endopod.com/fora.php3?phora=pod&subphora=Programming&threadname=apt-get+porn%3F
+http://lists.debian.org/debian-security/2001/debian-security-200108/msg00020.html
+http://www.linuxnewbie.org/cgi-bin/ubbcgi/ultimatebb.cgi?ubb=get_topic&f=22&t=007545
+http://www.wcug.wwu.edu/lists/wcug/200108/msg00045.html
+http://www.daft.t.se/konferens/thread.asp?TId=8242

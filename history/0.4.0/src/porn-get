@@ -1,0 +1,135 @@
+#!/bin/bash
+
+#netscape always crashes when i surf sex and love education homepages
+#therefore i made ${what}-get (werks almost like debian's apt-get)
+
+#this is free software, distributed under GNU GPL ver. 2.0 or later
+#tarzeau, gnu@fuckmicrosoft.com, www.linuks.mine.nu
+
+version="0.4.0"
+what=`basename $0 |sed s/-.*//`
+conf="${what}.conf"
+dir="./"
+#dir="/usr/share/${what}-get/"
+
+for a in lynx wget; do
+    which $a >/dev/null
+    if [ ! $? = 0 ]; then echo "$a not found"; exit 1; fi
+done
+
+case "$1" in
+    install)
+	if [ ! -f ${dir}${conf} ]; then
+	    echo "E: Opening ${dir}${conf} - ifstream::ifstream (2 No such file or directory)"
+	    echo
+	    exit 1
+	fi
+
+	if [ "x$2" = "x" ]; then
+		echo "${what}-get install lesbians10"
+		echo
+		exit 1
+	fi
+
+	cat ${dir}${conf} |grep -v "^#" |grep "^$2 " |while read pkg url fileext; do
+
+	echo "please wait..."
+	[ ! -e ${dir}${pkg} ] && mkdir -p ${dir}${pkg}
+	echo "entering directory... ${dir}${pkg}"
+	cd ${dir}${pkg}
+	referer=`echo $url |cut -d / -f1,2,3`
+	lynx -dump "$url" |grep -E "tp://|tps://" |grep -i "$fileext" |while read num file; do
+	    if [ ! -e `basename $file` ]; then
+		echo -ne "getting `basename $file`... "
+		wget --referer $url"/" -U "www.linuks.mine.nu/${what}-get" -nv -b -c $file -o /dev/null >/dev/null
+		#for slow connections use following and comment above
+		#echo $file | xargs --max-procs=10 -n 1 wget --referer $url"/" -U "www.linuks.mine.nu/${what}-get" -nv -c -o /dev/null >/dev/null
+		if [ $? = 0 ]; then echo "ok"; else echo "error"; fi
+	    else
+		echo skipping `basename $file`...
+	    fi
+	done
+	wait
+	find $dir -name $2 -empty -exec rm -r -- '{}' \;
+	cd -
+
+	done
+    ;;
+    
+    update)
+	if [ -f ${dir}${conf} ]; then mv ${dir}${conf} ${dir}${conf}.old; fi
+	wget -U "www.linuks.mine.nu/${what}-get" http://www.linuks.mine.nu/${what}-get/${what}.conf
+	mv ${conf} ${dir}
+    ;;
+    
+    share)
+	if [ "x$4" = "x" ]; then
+		echo "${what}-get share juliemygirlfriend http://www.smackmybitch.up/nude/ .jpg"
+		echo
+		exit 1
+	fi
+	lynx --dump "http://www.linuks.mine.nu/${what}-get/${what}-give.cgi?desc=$2&url=$3&type=$4"
+    ;;
+    
+    remove)
+    	if [ "x$2" = "x" ]; then
+	    echo "${what}-get remove packagename"
+	    echo "0 packages upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
+	    echo
+	    exit 1;
+	fi
+	if [ ! -d ${dir}$2 ]; then
+	    echo "E: Couldn't find package $2"
+	    echo
+	    exit 1
+	fi
+	echo "The following packages will be REMOVED:"
+	echo "  $2"
+	freed=`du -k ${dir}$2/ |awk '{print $1}'`
+	echo "Need to get 0B of archives. After unpacking ${freed}kb will be freed."
+	echo -ne "Do you want to continue? [Y/n] "
+	read reply
+	case $reply in
+	    n*|N*)
+		echo "Abort."
+		exit 1
+	    ;;
+	    *)
+		echo "Removing $2 ..."
+		rm -rf ${dir}$2
+	    ;;
+	esac
+    ;;
+    
+    moo)
+    cat << EOF
+         (__) 
+         (oo) 
+   /------\/ 
+  / |    ||   
+ *  /\---/\ 
+    ~~   ~~   
+...."Have you mooed today?"...
+EOF
+    ;;
+    
+    *)
+	echo "$what $version for everything with bash/lynx/wget"
+        echo "usage: ${what}-get install package"
+	echo "       ${what}-get update"
+        echo "       ${what}-get remove package"
+	echo "       ${what}-get share package url type"
+        echo
+	echo "${what}-get is a simple command line interface for downloading and"
+        echo "installing packages. The most frequently used commands are update"
+	echo "and install."
+        echo
+	echo "you can find out packages to install with ${what}-cache search"
+        echo "install - will install the package you choose"
+        echo "update - will update your ${what}.conf databases"
+        echo "remove - will remove a package"
+	echo "share - submit own package"
+	echo "                       This ${what} has Super Cow Powers."
+        echo
+    ;;
+esac

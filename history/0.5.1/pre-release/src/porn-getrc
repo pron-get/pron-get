@@ -1,0 +1,15 @@
+#
+# .porn-getrc
+#
+# file size of file. If the value is lower, it's recognized as a banner.
+BANNERSIZE=7000
+
+# were do you want to store gallery packages? 
+USERDIR=~/pr0n/
+
+# file name of link lists.
+LINKLIST="sources.list"
+
+DEBUG=0
+
+# end

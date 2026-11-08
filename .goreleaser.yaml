@@ -1,0 +1,56 @@
+# Release builds run in GitHub Actions on a version tag (see
+# .github/workflows/release.yml), so binaries never carry a developer's paths.
+version: 2
+
+project_name: pron-get
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: pron-get
+    main: ./cmd/pron-get
+    binary: pron-get
+    env:
+      - CGO_ENABLED=0
+    goos: [darwin, linux, freebsd]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -buildid= -X main.version={{ .Version }}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - id: pron-get
+    formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+      - HISTORY.md
+      - LICENSE
+      - man/pron-get.1
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+source:
+  enabled: true
+  name_template: "{{ .ProjectName }}-{{ .Version }}"
+
+changelog:
+  use: git
+  sort: asc
+  filters:
+    exclude:
+      - "^test:"
+      - "^ci:"
+
+release:
+  github:
+    owner: pron-get
+    name: pron-get
+  draft: true

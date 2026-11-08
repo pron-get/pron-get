@@ -1,0 +1,48 @@
+#!/bin/bash
+
+#this is free software, distributed under GNU GPL ver. 2.0 or later
+#tarzeau, gnu@fuckmicrosoft.com, www.linuks.mine.nu
+
+version="0.4.0"
+what=`basename $0 |sed s/-.*//`
+conf="${what}.conf"
+dir="./"
+#dir="/usr/share/${what}-get/"
+
+if [ ! -f ${dir}${conf} ]; then
+    echo "E: Opening ${dir}${conf} - ifstream::ifstream (2 No such file or directory)"
+    echo
+    exit 1
+fi
+
+case "$1" in
+    search)
+	if [ "x$2" = "x" ]; then
+    	    echo "${what}-cache search package"
+	    echo
+	    exit 1
+	fi
+	cat ${dir}${conf} |grep -v "^#" |grep "$2" |while read pkg url fileext; do echo $pkg $fileext; done
+    ;;
+    
+    stats)
+	num=`cat ${dir}${conf} |grep -v "^#" |wc |awk '{ print $1 }'`
+	echo "Total Packages in $conf: "$num
+    ;;
+    
+    pkgnames)
+	cat ${dir}${conf} |grep -v "^#" |while read pkg url fileext; do echo $pkg $fileext; done
+    ;;
+
+    *)
+        echo "${what} $version for everything with bash/lynx/wget"
+        echo "usage: ${what}-cache search package"
+	echo "       ${what}-cache pkgnames"
+	echo "       ${what}-cache stats"
+	echo
+	echo "stats - show some basic statistics"
+	echo "search - search the package list for a pattern"
+	echo "pkgnames - list the names of all packages"
+	echo
+    ;;
+esac

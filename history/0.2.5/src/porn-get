@@ -1,0 +1,109 @@
+#!/bin/bash
+
+#gnu@fuckmicrosoft.com, www.linuks.mine.nu
+version="0.2.5"
+
+#netscape always crashes when i surf sex and love education homepages
+#therefore i made porn-get (werks almost like debian's apt-get)
+
+which lynx >/dev/null
+if [ ! $? = 0 ]; then echo lynx not found; exit; fi
+which wget >/dev/null
+if [ ! $? = 0 ]; then echo wget not found; exit; fi
+
+if [ "$1" = "" ]; then
+    echo "porn $version for everything with bash/lynx/wget"
+    echo "usage: porn-get install package"
+    echo "       porn-get update"
+    echo "       porn-get remove package"
+    echo "       porn-get share package url type"
+    echo ""
+    echo "porn-get is a simple command line interface for downloading and"
+    echo "installing packages. The most frequently used commands are update"
+    echo "and install."
+    echo ""
+    echo "you can find out packages to install with porn-cache search"
+    echo "install - will install the package you choose"
+    echo "update - will update your porn.conf database"
+    echo "remove - will remove a package"
+    echo "share - submit own package"
+else
+
+case "$1" in
+    install)
+	if [ "$2x" = "x" ]; then
+		echo "porn-get install lesbians10"
+		echo
+		exit 1
+	fi
+
+	cat porn.conf |grep -v "^#" |grep "^$2 " |while read pkg url fileext; do 
+
+	echo "please wait..."
+	[ ! -e $pkg ] && mkdir -p $pkg
+	echo "entering directory... $pkg"
+	cd $pkg
+	referer=`echo $url |cut -d / -f1,2,3`
+	lynx -dump "$url" |grep -E "tp://|tps://" |grep -i "$fileext" |while read num file; do
+	    if [ ! -e `basename $file` ]; then
+		echo -ne "getting `basename $file`... "
+		wget --referer $url"/" -U "www.linuks.mine.nu/porn-get" -nv -b -c $file -o /dev/null >/dev/null
+		if [ $? = 0 ]; then echo "ok"; else echo "error"; fi
+	    else
+		echo skipping `basename $file`...
+	    fi
+	done
+	cd ..
+	
+	find $2 -empty -exec rm -r -- '{}' \;
+	
+	done
+    ;;
+    
+    update)
+	#mv porn.conf porn.conf.backup
+	wget -U "www.linuks.mine.nu/porn-get" http://www.linuks.mine.nu/porn-get/porn.conf
+    ;;
+    
+    share)
+	if [ "$4x" = "x" ]; then
+		echo "porn-get share juliemygirlfriend http://www.smackmybitch.up/nude/ .jpg"
+		echo
+		exit 1
+	fi
+	lynx --dump "http://www.linuks.mine.nu/lesbian/porn-give.cgi?desc=$2&url=$3&type=$4"
+    ;;
+    
+    remove)
+    	if test "x$2" = "x" ; then
+		echo "porn-get remove packagename"
+		echo "0 packages upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
+		echo
+		exit 1;
+	fi
+	echo "The following packages will be REMOVED:"
+	echo "  $2"
+	#echo "Need to get 0B of archives. After unpacking XXXkb will be freed."
+	echo -ne "Do you want to continue? [Y/n] "
+	read reply
+	case $reply in
+	    n*)
+		echo "Abort."
+		exit
+	    ;;
+	    N*)
+		echo "Abort."
+		exit	    
+	    ;;
+	    *)
+		echo "Removing $2 ..."
+		rm -rf $2
+	    ;;
+	esac
+    ;;
+    
+    *)
+    ;;
+esac
+
+fi

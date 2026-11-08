@@ -1,0 +1,410 @@
+.\" pron-get(1) - a tribute to porn-get(1) and porn(1), 2001,
+.\" whose manpage was in turn borrowed from apt(8) by Branden Robinson.
+.\"
+.\" This is free software; you may redistribute it and/or modify it
+.\" under the terms of the GNU General Public License, version 2 or later.
+.Dd November 8, 2026
+.Dt PRON-GET 1
+.Os
+.Sh NAME
+.Nm pron-get ,
+.Nm pron-cache
+.Nd apt-style package manager for porn, over Tor
+.Sh SYNOPSIS
+.Nm pron-get
+.Cm search
+.Op Fl page Ar n
+.Ar words ... | listing-url
+.Nm pron-get
+.Cm show
+.Ar package | url
+.Nm pron-get
+.Cm install
+.Op Fl q Ar height
+.Op Fl hls
+.Op Fl j Ar n
+.Op Fl limit Ar n
+.Op Fl search Ar words
+.Op Fl y
+.Ar package | url | listing-url ...
+.Nm pron-get
+.Cm remove
+.Op Fl y
+.Ar package ...
+.Nm pron-get
+.Cm update
+.Nm pron-get
+.Cm upgrade
+.Op Fl q Ar height
+.Op Fl j Ar n
+.Op Fl limit Ar n
+.Op Fl y
+.Nm pron-get
+.Cm list
+.Op Fl upgradable
+.Nm pron-get
+.Cm add-source
+.Ar listing-url | Cm search Ar words
+.Op Cm limit= Ns Ar n
+.Nm pron-get
+.Cm edit-sources
+.Nm pron-get
+.Cm torcheck
+.Nm pron-get
+.Cm moo
+.Pp
+.Nm pron-cache
+.Cm search Ar regex | Cm show Ar package | Cm pkgnames | Cm stats
+.Sh DESCRIPTION
+.Nm
+is a simple command line interface for downloading and installing
+video packages.
+It works almost like Debian's
+.Xr apt-get 8 ,
+except that a
+.Em package
+is one video, named by its viewkey, and the
+.Em archive
+is the website.
+The most frequently used commands are
+.Cm update
+and
+.Cm upgrade .
+.Pp
+Every request goes through Tor.
+If no Tor SOCKS proxy is running,
+.Nm
+starts a private
+.Xr tor 1
+and stops it on exit.
+Before any request reaches the site, check.torproject.org must confirm
+that traffic leaves through a Tor exit; otherwise
+.Nm
+refuses to continue and nothing is sent.
+.Pp
+Installed packages live in
+.Pa ~/pr0n/ Ns Ar package Ns Pa / ,
+one directory per video, holding the video file and a
+.Pa pkg.json
+manifest with its title, source, size and SHA-256.
+Interrupted downloads keep a
+.Pa .part
+file and resume where they stopped.
+.Sh COMMANDS
+.Bl -tag -width "edit-sources"
+.It Cm search Ar words ...
+Search the site and print one package per line: an installed mark
+.Pq Sy i ,
+the package name, the duration and the title.
+.Fl page Ar n
+shows later result pages.
+.It Cm search Ar listing-url
+List the videos on a model, pornstar, channel, user, playlist or category
+page, following its pages up to
+.Fl limit Ar n
+results (default 100,
+.Sy 0
+for all).
+.It Cm show Ar package
+Print the title, uploader, duration, homepage, install status and every
+available version (quality and format) of a package.
+.It Cm install Ar package ...
+Download packages.
+Arguments may be viewkeys, video URLs, or listing URLs, which are expanded
+into the newest
+.Fl limit Ar n
+videos of each (default 3,
+.Sy 0
+for all).
+.Fl search Ar words
+adds the results of a search.
+When listings are involved, the packages to install are shown first and
+.Nm
+asks before downloading.
+Installing a package by name clears an earlier
+.Cm remove .
+.It Cm remove Ar package ...
+Delete packages after showing how much space is freed.
+Removed packages are remembered, so
+.Cm upgrade
+does not bring them back.
+.It Cm update
+Fetch every source in
+.Xr sources.list 5
+and rebuild the package index.
+Each source is fetched on its own Tor circuit.
+A source that fails keeps its previous index entries.
+.It Cm upgrade
+Install every package in the index that is neither installed nor removed.
+The list is shown, and confirmed, before any network traffic.
+.Fl limit Ar n
+installs at most
+.Ar n
+packages.
+.It Cm list
+List installed packages, newest first.
+With
+.Fl upgradable ,
+list what
+.Cm upgrade
+would install instead.
+.It Cm add-source Ar source
+Check a source and append it to
+.Pa sources.list .
+.It Cm edit-sources
+Open
+.Pa sources.list
+in
+.Ev VISUAL ,
+.Ev EDITOR ,
+or
+.Xr vi 1 ,
+then check it.
+.It Cm cache Ar command
+The same as
+.Nm pron-cache .
+.It Cm torcheck
+Connect to Tor and print the exit address that would be used.
+.It Cm moo
+Has Super Cow Powers.
+.El
+.Ss pron-cache
+.Nm pron-cache
+queries the package index offline, like
+.Xr apt-cache 8 .
+It is the same binary: a symbolic link named
+.Nm pron-cache
+runs
+.Nm pron-get Cm cache .
+.Bl -tag -width "pkgnames"
+.It Cm search Ar regex
+Print index entries whose name, title or source matches the
+case-insensitive
+.Ar regex .
+Installed packages are marked
+.Sy i ,
+removed ones
+.Sy r .
+.It Cm show Ar package
+Print what the index knows about a package.
+.It Cm pkgnames
+Print every package name in the index.
+.It Cm stats
+Print counts of indexed, installed, upgradable and removed packages,
+the number of sources, and the age of the index.
+.El
+.Sh OPTIONS
+These options are accepted by every command:
+.Bl -tag -width "-sources file"
+.It Fl dir Ar dir
+Where packages are installed.
+Default:
+.Pa ~/pr0n .
+.It Fl tor Ar host : Ns Ar port
+Use this Tor SOCKS proxy.
+By default
+.Nm
+tries 127.0.0.1:9050 (a system tor) and 127.0.0.1:9150 (Tor Browser),
+then starts its own.
+.It Fl tor-bin Ar path
+The
+.Xr tor 1
+binary to start when no proxy is running.
+.It Fl sources Ar file
+The
+.Xr sources.list 5
+to use.
+.It Fl index Ar file
+The package index to use.
+.It Fl site Ar url
+The site's base URL.
+Default:
+.Lk https://www.pornhub.com .
+.It Fl onion
+Use the site's onion service instead of a Tor exit.
+.El
+.Pp
+Options for
+.Cm install
+and
+.Cm upgrade :
+.Bl -tag -width "-sources file"
+.It Fl q Ar height
+Highest quality to fetch, for example
+.Sy 720 .
+Default: the best available.
+If nothing is that small, the smallest version is used.
+.It Fl hls
+Prefer the HLS stream over the single MP4 file.
+HLS streams are remuxed to MP4 with
+.Xr ffmpeg 1
+when it is installed, and saved as MPEG-TS otherwise.
+.It Fl j Ar n
+Run
+.Ar n
+downloads in parallel (at most 8).
+Each job has its own Tor client and circuits.
+.It Fl y
+Assume yes; do not prompt.
+.El
+.Sh SOURCES.LIST
+One source per line.
+A source is a listing URL or
+.Cm search
+followed by words.
+A trailing
+.Cm limit= Ns Ar n
+sets how many of the newest videos are indexed from it (default 40,
+.Sy 0
+for all).
+.Sy #
+starts a comment.
+.Bd -literal -offset indent
+https://www.pornhub.com/model/example-model
+https://www.pornhub.com/playlist/123456789 limit=100
+search oil massage limit=20
+.Ed
+.Sh PRIVACY
+.Bl -bullet
+.It
+Tor or nothing: no request is made without a confirmed Tor exit, and
+.Ev HTTP_PROXY ,
+.Ev HTTPS_PROXY
+and any system
+.Pa torrc
+are ignored.
+.It
+No DNS leaks: hostnames are resolved inside Tor.
+The private tor runs with
+.Sy SafeSocks 1 ,
+which refuses any request that would need a local lookup.
+.It
+Unlinkable: every installed video, every
+.Cm update
+source and every parallel job uses a fresh circuit
+.Pq Sy IsolateSOCKSAuth ,
+so the site sees each from a different exit.
+.It
+Tor Browser's User-Agent; cookies live in memory and die with the process.
+.El
+.Pp
+.Nm
+does not protect what is on your disk:
+.Pa ~/pr0n
+is ordinary files.
+The site still sees what is downloaded, just not by whom.
+.Sh ENVIRONMENT
+.Bl -tag -width XDG_CONFIG_HOME
+.It Ev XDG_CONFIG_HOME
+If set, sources.list is read from
+.Pa $XDG_CONFIG_HOME/pron-get/ .
+.It Ev VISUAL , Ev EDITOR
+Editor for
+.Cm edit-sources .
+.El
+.Sh FILES
+.Bl -tag -width Ds -compact
+.It Pa ~/.config/pron-get/sources.list
+Sources for
+.Cm update ;
+created with examples on first use.
+.It Pa ~/Library/Caches/pron-get/index.json
+The package index built by
+.Cm update .
+.It Pa ~/Library/Caches/pron-get/tor/
+State of the private tor (guards and consensus), kept so later runs
+start quickly.
+.It Pa ~/pr0n/ Ns Ar package Ns Pa /pkg.json
+Manifest of an installed package.
+.It Pa ~/pr0n/.removed
+Packages that
+.Cm upgrade
+skips.
+.El
+.Sh EXIT STATUS
+.Ex -std
+Usage errors exit with 1, bad options with 2, and failures with 100,
+like
+.Xr apt-get 8 .
+Interrupting a download exits with 130 and keeps the partial file.
+.Sh EXAMPLES
+Find something and install it at 720p:
+.Bd -literal -offset indent
+$ pron-get search oil massage
+$ pron-get install -q 720 6a0123456789a
+.Ed
+.Pp
+Install the 10 newest videos of a model, three at a time:
+.Bd -literal -offset indent
+$ pron-get install -j 3 -limit 10 \e
+      https://www.pornhub.com/model/example-model
+.Ed
+.Pp
+Follow a playlist and keep up with it:
+.Bd -literal -offset indent
+$ pron-get add-source https://www.pornhub.com/playlist/123456789
+$ pron-get update && pron-get upgrade -j 3
+.Ed
+.Pp
+Search the index offline:
+.Bd -literal -offset indent
+$ pron-cache search 'massage|spa'
+.Ed
+.Sh DIAGNOSTICS
+.Bl -tag -width Ds
+.It Tor check failed, refusing to continue
+Tor could not be reached, or check.torproject.org did not see a Tor exit.
+Nothing was sent to the site.
+.It media URL is bound to a different exit IP
+Video links are signed for one IP address, and some Tor exits send
+traffic from several.
+.Nm
+resolves the video again on a new circuit and resumes.
+.It the site demands age verification from this exit
+The exit's country requires age verification.
+.Nm
+does not bypass it; try again later from another exit.
+.It video is not available in the Tor exit's country
+The video is geo-blocked where the exit is.
+.El
+.Sh SEE ALSO
+.Xr ffmpeg 1 ,
+.Xr tor 1 ,
+.Xr torsocks 1 ,
+.Xr apt-cache 8 ,
+.Xr apt-get 8
+.Sh HISTORY
+.Nm porn-get
+was written by tarzeau on 27 June 2001
+.Dq just for the fun of it
+as the package manager of the joke distribution Lesbian GNU/Linux.
+It was a bash script on top of
+.Xr lynx 1
+and
+.Xr wget 1 .
+pl0pix rewrote it in 2003 as version 0.5.1, the last release.
+.Nm
+picks up the version numbering at 0.6.0.
+The surviving releases are archived in
+.Pa history/
+in the source tree.
+.Sh AUTHORS
+.An tarzeau
+wrote porn-get in 2001 with
+.Dq the PORN team ;
+.An pl0pix
+rewrote it in 2003.
+.Nm pron-get
+is by the pron-get contributors, 2026.
+.Sh BUGS
+Only public videos are supported.
+Premium, private and locked videos are reported, not downloaded.
+.Pp
+The site's onion service was offline in November 2026, so
+.Fl onion
+may not work.
+.Pp
+The CDN limits each download to about 500 kB/s; use
+.Fl j .
+.Pp
+This manpage has been started.

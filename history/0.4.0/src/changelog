@@ -1,0 +1,44 @@
+
+25/aug/2001 version 0.4.0
+	    added super cow powers(tm)
+	    bugfixes, added manpage porn.1
+23/aug/2001 version 0.3.8
+	    added variable $what (ln -s porn-get corn-get, hint! hint!)
+	    check for .conf file
+	    removed support for porn*.conf (wget on www can't get porn*.conf)
+22/aug/2001 version 0.3.7
+	    added usage text if the first parameter
+	    makes no sense (anonymous contrib)
+	    fixed a small bug in porn-get share ($4x > x$4 or ${4}x)
+21/aug/2001 version 0.3.2
+	    makefile added (make install)
+	    added $conf, support for porn*.conf
+18/aug/2001 version 0.2.5
+	    adding porn-get share, and porn-give.cgi
+17/aug/2001 version 0.2.3 now supports https too! thanks rigel
+	    added syntax help if parameters are missing
+11/aug/2001 version 0.1.3 fixed a glitch noticed by
+            sami haahtinen (ressu@uusikaupunki.fi)
+	    added verbodity to porn-get remove, also by sami, thank you
+09/aug/2001 version 0.1.2 still but added about
+            9000 more packages (porn2.conf)
+
+---summerholidays in south turkey---
+
+04/jul/2001 version 0.1.2
+	    added -i to grep "$fileext" and --referer like
+	    hagbardceline (from www.badvogato.org) suggested
+02/jul/2001 version 0.0.9
+	    porn-get remove added
+	    empty packages (broken) are deleted
+02/jul/2001 version 0.0.7
+	    check if wget/lynx is installed
+	    porn-cache stats
+	    porn-cache pkgnames
+01/jul/2001 version 0.0.6
+            changed download mode to background
+28/jun/2001 version 0.0.3
+            interesting .. works better that i thought it would...
+            packages are easy to add too (anyone could)
+27/jun/2001 unreleased
+            made porn-get just for the fun of it

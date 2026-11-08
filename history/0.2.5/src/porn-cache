@@ -1,0 +1,30 @@
+#!/bin/bash
+
+#gnu@fuckmicrosoft.com, www.linuks.mine.nu
+version="0.2.5"
+
+case "$1" in
+    search)
+	cat porn.conf |grep -v "^#" |grep "$2" |while read pkg url fileext; do echo $pkg $fileext; done
+    ;;
+    
+    stats)
+	num=`cat porn.conf |grep -v "^#" |wc |awk '{ print $1 }'`
+	echo "Total Packages: "$num
+    ;;
+    
+    pkgnames)
+	cat porn.conf |grep -v "^#" |while read pkg url fileext; do echo $pkg $fileext; done
+    ;;
+    
+    *)
+        echo "porn $version for everything with bash/lynx/wget"
+        echo "usage: porn-cache search package"
+	echo "       porn-cache pkgnames"
+	echo "       porn-cache stats"
+	echo ""
+	echo "stats - show some basic statistics"
+	echo "search - search the package list for a pattern"
+	echo "pkgnames - list the names of all packages"
+    ;;
+esac

@@ -1,0 +1,288 @@
+#!/bin/bash
+#set -xv
+
+# netscape always crashes when i surf sex and love education homepages
+# therefore i made porn-get (werks almost like debian's apt-get)
+
+# this is free software, distributed under GNU GPL ver. 2.0 or later
+# tarzeau, gnu@fuckmicrosoft.com, www.linuks.mine.nu
+# pl0pix, <ew@code.de>
+
+
+version="0.5.1"
+client=www.linuks.mine.nu/porn-get-$version
+conf=porn.conf
+RCFILE=porn-getrc
+DEBUG=${DEBUG:=0}
+
+if [ ! -z $DEVELOPER  ]; then 
+	dir="/usr/share/porn-get/"
+else
+	dir=$(pwd)/
+fi
+gpkglist=${dir}${conf}
+
+# 
+# Load main config file
+if [ -r ${dir}${RCFILE} ]; then
+	source ${dir}${RCFILE}
+fi
+
+if [ -r /etc/${RCFILE} ]; then
+	source /etc/${RCFILE}
+fi
+
+# If available read user config
+if [ -r ~/.${RCFILE} ]; then
+	source ~/.${RCFILE}
+fi
+
+# Create Userdir if nessecary
+if [ ! -d $USERDIR ]; then
+	mkdir $USERDIR
+	chmod 700 $USERDIR
+fi
+
+#gpkg info file
+gpkgfile=.gpkg.info
+gpkgmd5=.gpkg.md5sum
+
+# check depends
+for a in lynx wget; do
+    if ! which $a >/dev/null; then echo $a not found; exit 1; fi
+    #if [ ! `which $a >/dev/null` = 0 ]; then echo "$a not found"; exit 1; fi
+done
+
+usage () {
+	cat << ENDOFUSAGE
+porn-get $version for everything with bash/lynx/wget
+usage: porn-get install package or pattern
+       porn-get update
+			 porn-get upgrade
+       porn-get remove package or pattern
+
+porn-get is a simple command line interface for downloading and installing
+gallery packages. The most frequently used commands are update and install.
+
+You can find out packages to install with "porn-cache search babes"
+install - will install the package you choose
+update - will recreate your porn.conf database
+upgrade - will upgrade your porn.conf database
+remove - will remove a package
+                       This porn has Super Cow Powers.
+ENDOFUSAGE
+}
+
+getlinks () {
+	starttime=`date +%s`
+  grep -v -e "^#" -e "^$" ${LINKLIST}| while read site ext category
+  do
+    test $DEBUG -ge 1 && echo DEBUG SITE:$site EXT:$ext CAT:$category
+    if [ -z $ext ]; then
+      TMP1=`mktemp -t porn.XXXXXX`
+      TMP2=`mktemp -t porn.XXXXXX`
+      echo -n "Hit: $site Packages " 
+      lynx -dump $site | ${dir}liblinkextract.pl >> $TMP1
+      #echo DEBUG lynx exit code $?
+      echo \[$(( $count + $(wc -l $TMP1 |awk '{print $1;}') ))\] 
+      cat $TMP1 | ${dir}liblinkclean.pl -s $site >>$TMP2
+      cat $TMP2 >> $conf
+      count=$(( $count + $(wc -l $conf |awk '{print $1;}') ))
+      rm $TMP1 $TMP2
+			count=0
+    elif [ -n $ext ]; then
+      for each in $category; do
+        TMP1=`mktemp -t porn.XXXXXX`
+        TMP2=`mktemp -t porn.XXXXXX`
+        echo -n "Hit: ${site}/${each}${ext} Packages " 
+        lynx -dump ${site}/${each}${ext} | ${dir}liblinkextract.pl >>$TMP1
+        echo \[$(wc -l $TMP1 |awk '{print $1}')\]
+        cat $TMP1 | ${dir}liblinkclean.pl -s $site >> $TMP2
+        cat $TMP2 >> $conf
+        count=$(( $count + $(wc -l $conf |awk '{print $1;}') ))
+        rm $TMP1 $TMP2
+      done
+    elif [ -z $ext ] && [ -n $category ]; then
+      for each in $category; do
+        TMP1=`mktemp -t porn.XXXXXX`
+        TMP2=`mktemp -t porn.XXXXXX`
+        echo -n "Hit: ${site}/${each} Packages " 
+        lynx -dump ${site}/${each} | ${dir}liblinkextract.pl >>$TMP1
+        echo \[$(wc -l $TMP1 |awk '{print $1}')\]
+        cat $TMP1 | ${dir}liblinkclean.pl -s $site >> $TMP2
+        cat $TMP2 >> $conf
+        count=$(( $count + $(wc -l $conf |awk '{print $1;}') ))
+        rm $TMP1 $TMP2
+      done
+    else 
+      echo E: sources.list format not supported
+    fi
+  done
+	endtime=`date +%s`
+	updateduration=$(( $endtime - $starttime ))
+  # Cleanup
+  TMP1=`mktemp -t porn.XXXXXX`
+  cbefore=$(wc -l $conf | awk '{print $1;}')
+	echo Fetched \[$cbefore\] gpkg sources in ${updateduration}s \(`ls -lk $gpkglist | awk '{print $5;}'`kB\)
+  echo Reading Package Lists... Done
+	# remove useless gpkg sources doubled or fucked
+	echo -n Building gpkg sources Tree...
+  sort $conf | uniq -f 1 > $TMP1
+  cafter=$(wc -l $TMP1 | awk '{print $1;}') 
+  cfinal=$(( $cbefore - $cafter ))
+  test $DEBUG -ge 1 && echo "DEBUG ->$cbefore<- ->$cafter<- \[$cfinal\]"
+  echo \[$(wc -l $TMP1 | awk '{print $1;}')\] Done
+  mv $TMP1 $conf
+}
+
+# getfiles takes 3 args 
+getfiles () {
+  local pkg=$1
+  local url=$2
+  local fileext=$3
+  local error=0
+  cd ${pkg}
+  lynx -dump "$url" |grep -E "http\w*://" |grep -i "$fileext" |while read num file
+  do
+    test $DEBUG -ge 1 && echo DEBUG Getting $file
+    # stop getting that gpkg on first error
+    if [ $error -lt 1 ]; then
+      #wget --referer $url"/" -U $client -nv -c $file -o /dev/null
+      wget --referer $url"/" -U $client -nv -c $file -o /dev/null &>/dev/null
+      #for slow connections use following and comment above
+      #echo $file | xargs --max-procs=10 -n 1 wget --referer $url"/" -U $client -nv -c -o /dev/null >/dev/null
+      if [ $? -ge 1 ];then
+        error=$(( error + 1 ))
+      fi
+			# TODO: register file in db like: "<md5sum> <url1> [<url2> ...]"
+    fi
+  done
+  wait
+  # remove html pages
+  rm *.htm* &>/dev/null
+  rm *.php* &>/dev/null
+  cd ..
+}
+
+# cleaninst takes the directory name (gpkg name) at $1
+cleaninst () {
+  if [ `ls $1 |wc -l|tr -d " "` = 0 ]; then
+    test $DEBUG -ge 1 && echo DEBUG Removing gpkg $1
+    rmdir $1 &>/dev/null
+    return 1
+  else
+    return 0
+  fi
+}
+
+cleanbanner () {
+  local counter=0;
+  cd $1
+	# check if there is a file
+	if [ `ls &>/dev/null|wc -l |tr -d " "` -ge 1 ]; then 
+		for e in * ; do
+		  # check size
+			if [ `ls -l $e |awk '{print $5;}'` -lt $bannersize ]; then
+				test $DEBUG -ge 1 && echo DEBUG ha, got one ...
+				rm $e
+				counter=$(( counter + 1 ))
+			fi
+		done
+	fi
+	test $DEBUG -ge 1 && echo DEBUG $counter removed banner
+  cd ..
+}
+
+#
+# Main
+#
+
+case "$1" in
+    install)
+  if [ ! -f ${gpkglist} ]; then
+      echo "E: Opening ${gpkglist} - ifstream::ifstream (2 No such file or directory)"
+      echo
+      exit 1
+  fi
+
+  if [ x$2 = x ]; then
+    echo "porn-get install lesbians10"
+    echo
+    exit 1
+  fi
+	(
+	cd $USERDIR
+  cat ${gpkglist} |grep -v "^#" |grep "^.*$2.*" |while read pkg url fileext
+  do
+    count=0
+    [ ! -d ${pkg} ] && mkdir -p ${pkg}
+    echo -n ${pkg}
+    getfiles $pkg $url $fileext
+    #echo  -n \[$?\]
+    # checks and cleanup
+    cleanbanner $pkg
+    cleaninst $pkg
+    if [ $? = 0 ]; then
+      echo \[`ls $pkg |wc -l |tr -d " "`\]
+    else
+      echo " E: gpkg fucked ;)"
+    fi
+  done
+	)
+  ;;
+
+    upgrade)
+  getlinks 
+    ;;
+    
+    update)
+  rm $conf
+  getlinks
+  ;;
+
+    remove)
+  if [ "x$2" = "x" ]; then
+    echo "porn-get remove packagename"
+    echo "0 packages upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
+    echo
+    exit 1;
+  fi
+  if [ ! -d ${dir}$2 ]; then
+    echo "E: Couldn't find package $2"
+    echo
+    exit 1
+  fi
+  echo "The following packages will be REMOVED:"
+  echo "  $2"
+  freed=`du -k ${dir}$2/ |awk '{print $1}'`
+  echo "Need to get 0B of archives. After unpacking ${freed}kb will be freed."
+  echo -ne "Do you want to continue? [y/N] "
+  read reply
+  case $reply in
+      y*|Y*)
+    echo "Removing $2 ..."
+    rm -rf ${dir}$2
+		;;
+      *)
+    echo "Abort."
+    exit 1
+		;;
+  esac
+    ;;
+    
+    moo)
+    cat << EOF
+         (__) 
+         (oo) 
+   /------\/ 
+  / |    ||   
+ *  /\---/\ 
+    ~~   ~~   
+...."Have you mooed today?"...
+EOF
+    ;;
+    
+    *)
+		usage
+    ;;
+esac

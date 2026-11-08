@@ -1,0 +1,86 @@
+#!/bin/bash
+
+#gnu@fuckmicrosoft.com, www.linuks.mine.nu
+version="0.1.2"
+
+#netscape always crashes when i surf sex and love education homepages
+#therefore i made porn-get (werks almost like debian's apt-get)
+
+which lynx >/dev/null
+if [ ! $? = 0 ]; then echo lynx not found; exit; fi
+which wget >/dev/null
+if [ ! $? = 0 ]; then echo wget not found; exit; fi
+
+if [ "$1" = "" ]; then
+    echo "porn $version for everything with bash/lynx/wget"
+    echo "usage: porn-get install package"
+    echo "       porn-get update"
+    echo "       porn-get remove package"
+    echo ""
+    echo "porn-get is a simple command line interface for downloading and"
+    echo "installing packages. The most frequently used commands are update"
+    echo "and install."
+    echo ""
+    echo "you can find out packages to install with porn-cache search"
+    echo "install - will install the package you choose"
+    echo "update - will update your porn.conf database"
+    echo "remove - will remove a package"
+else
+
+case "$1" in
+    install)
+	cat porn.conf |grep -v "^#" |grep "^$2 " |while read pkg url fileext; do 
+
+	echo "please wait..."
+	[ ! -e $pkg ] && mkdir -p $pkg
+	echo "entering directory... $pkg"
+	cd $pkg
+	referer=`echo $url |cut -d / -f1,2,3`
+	lynx -dump "$url" |grep "tp://" |grep -i "$fileext" |while read num file; do
+	    if [ ! -e `basename $file` ]; then
+		echo -ne "getting `basename $file`... "
+		wget --referer $url"/" -U "www.linuks.mine.nu/porn-get" -nv -b -c $file -o /dev/null >/dev/null
+		if [ $? = 0 ]; then echo "ok"; else echo "error"; fi
+	    else
+		echo skipping `basename $file`...
+	    fi
+	done
+	cd ..
+	
+	rm -r `find $2 -empty`
+	
+	done
+    ;;
+    
+    update)
+	mv porn.conf porn.conf.backup
+	wget -U "www.linuks.mine.nu/porn-get" http://www.linuks.mine.nu/porn-get/porn.conf
+    ;;
+    
+    remove)
+	echo "The following packages will be REMOVED:"
+	echo "  $2"
+	#echo "Need to get 0B of archives. After unpacking XXXkb will be freed."
+	echo -ne "Do you want to continue? [Y/n] "
+	read reply
+	case $reply in
+	    n*)
+		echo "Abort."
+		exit
+	    ;;
+	    N*)
+		echo "Abort."
+		exit	    
+	    ;;
+	    *)
+		echo "Removing $2 ..."
+		rm -rf $2
+	    ;;
+	esac
+    ;;
+    
+    *)
+    ;;
+esac
+
+fi
