@@ -13,7 +13,11 @@
 //	git config credential.https://github.com.helper ''
 //	git config --add credential.https://github.com.helper '!pron-get-bot git-credential'
 //
-// The App's private key is read from ~/.config/pron-get-bot/key.pem.
+// The App's private key is read from ~/.config/pron-get-bot/key.pem. To act
+// as a different App, set PRON_GET_BOT_CLIENT_ID and PRON_GET_BOT_KEY (the
+// path to its .pem file).
+//
+// Install with: go install github.com/pron-get/pron-get/tools/pron-get-bot@main
 package main
 
 import (
@@ -37,10 +41,28 @@ import (
 )
 
 const (
-	clientID = "Iv23liO7uMUEntSsX0cF" // App ID 5685919
-	org      = "pron-get"
-	api      = "https://api.github.com"
+	defaultClientID = "Iv23liO7uMUEntSsX0cF" // App ID 5685919
+	org             = "pron-get"
+	api             = "https://api.github.com"
 )
+
+func clientID() string {
+	if id := os.Getenv("PRON_GET_BOT_CLIENT_ID"); id != "" {
+		return id
+	}
+	return defaultClientID
+}
+
+func keyPath() (string, error) {
+	if p := os.Getenv("PRON_GET_BOT_KEY"); p != "" {
+		return p, nil
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".config", "pron-get-bot", "key.pem"), nil
+}
 
 func main() {
 	if len(os.Args) < 2 {
@@ -144,11 +166,11 @@ func call(method, path, jwt string, v any) error {
 
 // appJWT returns a 9-minute RS256 JWT identifying the App.
 func appJWT() (string, error) {
-	home, err := os.UserHomeDir()
+	path, err := keyPath()
 	if err != nil {
 		return "", err
 	}
-	b, err := os.ReadFile(filepath.Join(home, ".config", "pron-get-bot", "key.pem"))
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
@@ -167,7 +189,7 @@ func appJWT() (string, error) {
 	now := time.Now().Unix()
 	enc := base64.RawURLEncoding
 	header := enc.EncodeToString([]byte(`{"alg":"RS256","typ":"JWT"}`))
-	claims, _ := json.Marshal(map[string]any{"iat": now - 60, "exp": now + 540, "iss": clientID})
+	claims, _ := json.Marshal(map[string]any{"iat": now - 60, "exp": now + 540, "iss": clientID()})
 	unsigned := header + "." + enc.EncodeToString(claims)
 	sum := sha256.Sum256([]byte(unsigned))
 	sig, err := rsa.SignPKCS1v15(rand.Reader, key, crypto.SHA256, sum[:])
