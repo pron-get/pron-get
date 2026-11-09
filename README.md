@@ -60,10 +60,10 @@ Read the manual without installing it: `man ./man/pron-get.1`, or
 | `search <listing-url>` | list a model, pornstar, channel, user, playlist or category (`-limit`, default 100) |
 | `show <id\|url>` | title, uploader, duration and available qualities |
 | `install <id\|url>...` | download to `~/pr0n/<id>/`. `-q 720` caps quality, `-hls` prefers the stream |
-| `install <listing-url>...` | bulk install from listings; `-search "words"` adds a search. `-limit N` per listing (default 3, newest first; 0 = all), `-j N` parallel downloads, `-x N` connections per video (default 4), `-y` skips the prompt |
+| `install <listing-url>...` | bulk install from listings; `-search "words"` adds a search. `-limit N` per listing (default 3, newest first; 0 = all), `-j N` parallel downloads, `-x N` connections per video (default 4), `-ukcpa` skips likely Crime and Policing Act 2026 material, `-y` skips the prompt |
 | `remove <id>...` | delete packages (`-y` skips the prompt); `upgrade` won't reinstall them |
 | `update` | fetch every source in `sources.list` into the package index |
-| `upgrade` | install everything new in the index (`-limit`, `-j`, `-x`, `-q`, `-y`) |
+| `upgrade` | install everything new in the index (`-limit`, `-j`, `-x`, `-ukcpa`, `-q`, `-y`) |
 | `list` | installed packages; `-upgradable` for what `upgrade` would install |
 | `add-source <url \| search words> [limit=N]` | append to `sources.list` |
 | `edit-sources` | open `sources.list` in `$EDITOR` |

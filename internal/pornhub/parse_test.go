@@ -2,6 +2,7 @@ package pornhub
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"testing"
 )
@@ -34,7 +35,13 @@ var flashvars_123 = {"video_title":"fallback","image_url":"https://img/x.jpg","v
   {"videoUrl":"https://cdn/hls/720P_4000K_1.mp4/master.m3u8","format":"hls","quality":"720"},
   {"videoUrl":"","format":"hls","quality":"480"}
  ]};
-var other = 1;</script></body></html>`
+var other = 1;</script>
+<div class="categoriesWrapper"><a data-label="category" class="item" href="/video?c=3">Amateur</a>
+ <a data-label="category" class="item" href="/hd">HD Porn</a></div>
+<div class="tagsWrapper"><p>Tags</p>
+ <a data-label="tag" class="item isTag" href="/video/search?search=a"><span>cowgirl riding</span></a>
+ <a data-label="tag" class="item isTag" href="/video/search?search=b"><span>caf&eacute; </span></a></div>
+</body></html>`
 
 func TestParseVideoPage(t *testing.T) {
 	v, defs, err := parseVideoPage(videoPage)
@@ -43,6 +50,9 @@ func TestParseVideoPage(t *testing.T) {
 	}
 	if v.Title != "A & B test video" || v.Uploader != "Some Channel" || v.Duration != 95 {
 		t.Errorf("got %+v", v)
+	}
+	if fmt.Sprint(v.Categories) != "[Amateur HD Porn]" || fmt.Sprint(v.Tags) != "[cowgirl riding café]" {
+		t.Errorf("categories %q, tags %q", v.Categories, v.Tags)
 	}
 	if len(defs) != 3 || defs[1].Quality != 720 || defs[0].Quality != 0 {
 		t.Errorf("defs %+v", defs)

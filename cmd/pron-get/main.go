@@ -27,6 +27,7 @@ import (
 	"github.com/pron-get/pron-get/internal/sources"
 	"github.com/pron-get/pron-get/internal/store"
 	"github.com/pron-get/pron-get/internal/tor"
+	"github.com/pron-get/pron-get/internal/ukcpa"
 )
 
 // version picks up where porn-get 0.5.1 left off. Release builds set it with
@@ -81,6 +82,7 @@ type opts struct {
 	limit   int
 	jobs    int
 	conns   int
+	ukcpa   bool
 
 	sourcesPath string
 	indexPath   string
@@ -144,6 +146,7 @@ func main() {
 		fs.IntVar(&o.limit, "limit", 3, "newest packages taken from each listing or search (0 = all)")
 		fs.IntVar(&o.jobs, "j", 1, "parallel downloads, each on its own Tor circuit (max 8)")
 		fs.IntVar(&o.conns, "x", 4, "connections per mp4 download, each on its own Tor circuit (max 8)")
+		fs.BoolVar(&o.ukcpa, "ukcpa", false, "skip videos whose title, tags or categories suggest an offence under the\nCrime and Policing Act 2026 (England and Wales); a keyword filter, not a legal test")
 		fs.BoolVar(&o.yes, "y", false, "don't ask for confirmation")
 		fs.Parse(args)
 		ids, listings := parseTargets(fs.Args())
@@ -194,6 +197,7 @@ func main() {
 		fs.IntVar(&o.limit, "limit", 0, "install at most this many (0 = all)")
 		fs.IntVar(&o.jobs, "j", 1, "parallel downloads, each on its own Tor circuit (max 8)")
 		fs.IntVar(&o.conns, "x", 4, "connections per mp4 download, each on its own Tor circuit (max 8)")
+		fs.BoolVar(&o.ukcpa, "ukcpa", false, "skip videos whose title, tags or categories suggest an offence under the\nCrime and Policing Act 2026 (England and Wales); a keyword filter, not a legal test")
 		fs.BoolVar(&o.yes, "y", false, "don't ask for confirmation")
 		fs.Parse(args)
 		st := store.Store{Root: o.dir}
@@ -505,9 +509,9 @@ func installPkgs(ctx context.Context, s *session, ids []string, o opts) error {
 	}
 	queue := make(chan job)
 	var (
-		mu                sync.Mutex
-		installed, failed int
-		wg                sync.WaitGroup
+		mu                         sync.Mutex
+		installed, failed, skipped int
+		wg                         sync.WaitGroup
 	)
 	for w := 0; w < jobs; w++ {
 		wk := worker{tor: s.tor, st: s.st, bar: jobs == 1}
@@ -525,6 +529,8 @@ func installPkgs(ctx context.Context, s *session, ids []string, o opts) error {
 				mu.Lock()
 				if err == nil {
 					installed++
+				} else if errors.Is(err, errSkipped) {
+					skipped++
 				} else if ctx.Err() == nil {
 					fmt.Fprintf(os.Stderr, "E: %s: %v\n", j.id, err)
 					failed++
@@ -547,12 +553,15 @@ feed:
 		return ctx.Err()
 	}
 
-	fmt.Printf("0 upgraded, %d newly installed, 0 to remove and %d not upgraded.\n", installed, failed)
+	fmt.Printf("0 upgraded, %d newly installed, 0 to remove and %d not upgraded.\n", installed, failed+skipped)
 	if failed > 0 {
 		return fmt.Errorf("%d package(s) failed", failed)
 	}
 	return nil
 }
+
+// errSkipped means a filter (-ukcpa) chose not to install the package.
+var errSkipped = errors.New("skipped")
 
 func installOne(ctx context.Context, s worker, n int, id string, o opts) error {
 	var v *pornhub.Video
@@ -574,6 +583,12 @@ func installOne(ctx context.Context, s worker, n int, id string, o opts) error {
 	}
 	if err := resolve(); err != nil {
 		return err
+	}
+	if o.ukcpa {
+		if m, ok := ukcpa.Check(v.Title, v.Tags, v.Categories); ok {
+			fmt.Fprintf(os.Stderr, "W: Skipping %s: %s %q suggests %s (Crime and Policing Act 2026)\n", id, m.Field, m.Term, m.Offence)
+			return errSkipped
+		}
 	}
 
 	dir, err := s.st.Prepare(id)

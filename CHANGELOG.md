@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- `install -ukcpa` and `upgrade -ukcpa` skip videos whose title, tags or
+  categories suggest an offence under the Crime and Policing Act 2026
+  (England and Wales). This is a keyword filter, not a legal test.
+- Video pages are now parsed for their categories and tags.
+
 ## 0.7.4
 
 0.7.3 was tagged but never released: its build failed on a flaky test.
