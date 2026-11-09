@@ -144,7 +144,7 @@ The only cookie it sets is the click-through "I am 18+" disclaimer.
 ## Development
 
 ```
-go run ./tools/manhtml -version 0.7.1 > docs/pron-get.1.html   # after editing man/pron-get.1
+go run ./tools/manhtml -version 0.7.2 > docs/pron-get.1.html   # after editing man/pron-get.1
 go test -race ./...
 PRON_GET_LIVE=1 go test ./internal/tor ./internal/pornhub -run Live -v   # real network
 ```

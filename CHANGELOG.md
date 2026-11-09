@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.2
 
 - pron-get always starts its own tor unless `-tor` names a proxy. It no
   longer picks up a system tor or Tor Browser on 9050/9150, so closing Tor

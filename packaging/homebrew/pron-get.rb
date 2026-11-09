@@ -7,7 +7,7 @@
 class PronGet < Formula
   desc "Apt-style package manager for porn, over Tor"
   homepage "https://github.com/pron-get/pron-get"
-  url "https://github.com/pron-get/pron-get/archive/refs/tags/v0.7.1.tar.gz"
+  url "https://github.com/pron-get/pron-get/archive/refs/tags/v0.7.2.tar.gz"
   sha256 "REPLACE_WITH_RELEASE_TARBALL_SHA256"
   license "GPL-2.0-or-later"
 
