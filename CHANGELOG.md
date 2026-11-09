@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- `install` and `upgrade` fetch each mp4 over 4 Tor circuits at once
+  (`-x N`, `-x 1` for one). A 272 MB video took 133 s instead of about
+  340 s. Interrupted downloads resume piece by piece.
+- The download speed shown after a resume counts only new bytes.
+
 ## 0.7.2
 
 - pron-get always starts its own tor unless `-tor` names a proxy. It no

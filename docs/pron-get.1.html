@@ -140,11 +140,11 @@ PRON-GET(1)                 General Commands Manual                PRON-GET(1)
 <span class="b">SYNOPSIS</span>
      <span class="b">pron-get</span> <span class="b">search</span> [<span class="b">-page</span> <span class="u">n</span>] <span class="u">words</span> <span class="u">...</span> | <span class="u">listing-url</span>
      <span class="b">pron-get</span> <span class="b">show</span> <span class="u">package</span> | <span class="u">url</span>
-     <span class="b">pron-get</span> <span class="b">install</span> [<span class="b">-q</span> <span class="u">height</span>] [<span class="b">-hls</span>] [<span class="b">-j</span> <span class="u">n</span>] [<span class="b">-limit</span> <span class="u">n</span>] [<span class="b">-search</span> <span class="u">words</span>]
-              [<span class="b">-y</span>] <span class="u">package</span> | <span class="u">url</span> | <span class="u">listing-url</span> <span class="u">...</span>
+     <span class="b">pron-get</span> <span class="b">install</span> [<span class="b">-q</span> <span class="u">height</span>] [<span class="b">-hls</span>] [<span class="b">-j</span> <span class="u">n</span>] [<span class="b">-x</span> <span class="u">n</span>] [<span class="b">-limit</span> <span class="u">n</span>]
+              [<span class="b">-search</span> <span class="u">words</span>] [<span class="b">-y</span>] <span class="u">package</span> | <span class="u">url</span> | <span class="u">listing-url</span> <span class="u">...</span>
      <span class="b">pron-get</span> <span class="b">remove</span> [<span class="b">-y</span>] <span class="u">package</span> <span class="u">...</span>
      <span class="b">pron-get</span> <span class="b">update</span>
-     <span class="b">pron-get</span> <span class="b">upgrade</span> [<span class="b">-q</span> <span class="u">height</span>] [<span class="b">-j</span> <span class="u">n</span>] [<span class="b">-limit</span> <span class="u">n</span>] [<span class="b">-y</span>]
+     <span class="b">pron-get</span> <span class="b">upgrade</span> [<span class="b">-q</span> <span class="u">height</span>] [<span class="b">-j</span> <span class="u">n</span>] [<span class="b">-x</span> <span class="u">n</span>] [<span class="b">-limit</span> <span class="u">n</span>] [<span class="b">-y</span>]
      <span class="b">pron-get</span> <span class="b">list</span> [<span class="b">-upgradable</span>]
      <span class="b">pron-get</span> <span class="b">add-source</span> <span class="u">listing-url</span> | <span class="b">search</span> <span class="u">words</span> [<span class="b">limit=</span><span class="u">n</span>]
      <span class="b">pron-get</span> <span class="b">edit-sources</span>
@@ -277,6 +277,11 @@ PRON-GET(1)                 General Commands Manual                PRON-GET(1)
      <span class="b">-j</span> <span class="u">n</span>           Run <span class="u">n</span> downloads in parallel (at most 8).  Each job has its
                     own Tor client and circuits.
 
+     <span class="b">-x</span> <span class="u">n</span>           Fetch each mp4 over <span class="u">n</span> connections (default 4, at most 8),
+                    each on its own Tor circuit with its own signed media URL.
+                    Tor limits speed per circuit, so this is about <span class="u">n</span> times
+                    faster.  <span class="b">-x</span> <span class="b">1</span> uses a single connection.
+
      <span class="b">-y</span>             Assume yes; do not prompt.
 
 <span class="b">SOURCES.LIST</span>
@@ -391,7 +396,7 @@ PRON-GET(1)                 General Commands Manual                PRON-GET(1)
      The site&#39;s onion service was offline in November 2026, so <span class="b">-onion</span> may not
      work.
 
-     The CDN limits each download to about 500 kB/s; use <span class="b">-j</span>.
+     One Tor circuit carries about 0.5 to 1.5 MB/s; see <span class="b">-x</span> and <span class="b">-j</span>.
 
      This manpage has been started.
 

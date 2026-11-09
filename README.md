@@ -60,10 +60,10 @@ Read the manual without installing it: `man ./man/pron-get.1`, or
 | `search <listing-url>` | list a model, pornstar, channel, user, playlist or category (`-limit`, default 100) |
 | `show <id\|url>` | title, uploader, duration and available qualities |
 | `install <id\|url>...` | download to `~/pr0n/<id>/`. `-q 720` caps quality, `-hls` prefers the stream |
-| `install <listing-url>...` | bulk install from listings; `-search "words"` adds a search. `-limit N` per listing (default 3, newest first; 0 = all), `-j N` parallel downloads, `-y` skips the prompt |
+| `install <listing-url>...` | bulk install from listings; `-search "words"` adds a search. `-limit N` per listing (default 3, newest first; 0 = all), `-j N` parallel downloads, `-x N` connections per video (default 4), `-y` skips the prompt |
 | `remove <id>...` | delete packages (`-y` skips the prompt); `upgrade` won't reinstall them |
 | `update` | fetch every source in `sources.list` into the package index |
-| `upgrade` | install everything new in the index (`-limit`, `-j`, `-q`, `-y`) |
+| `upgrade` | install everything new in the index (`-limit`, `-j`, `-x`, `-q`, `-y`) |
 | `list` | installed packages; `-upgradable` for what `upgrade` would install |
 | `add-source <url \| search words> [limit=N]` | append to `sources.list` |
 | `edit-sources` | open `sources.list` in `$EDITOR` |
@@ -118,7 +118,9 @@ $ pron-get upgrade -j 3
   `HTTP(S)_PROXY` and the system torrc are ignored.
 - **Unlinkable videos.** Each installed video uses a fresh circuit
   (`IsolateSOCKSAuth`), so the site sees each one from a different exit.
-  Parallel jobs (`-j`) each get their own client and circuits.
+  Parallel jobs (`-j`) each get their own client and circuits. The extra
+  connections for one video (`-x`) use circuits of their own too, so the
+  site sees that video fetched from several exits at once.
 - **Blends in.** Tor Browser's User-Agent; cookies in memory only, gone on exit.
 - **Local.** Package dirs are created `0700`.
 
@@ -134,10 +136,13 @@ The only cookie it sets is the click-through "I am 18+" disclaimer.
 ## Notes
 
 - Media links are signed for the exit IP that resolved them (`ip=` in the
-  URL) and throttled to ~500 kB/s per link. A CDN answer of HTTP 474 means
-  the IP didn't match (some exits use several outbound IPs); pron-get then
-  re-resolves on a new circuit and resumes. Use `-j` to download several
-  videos at once; each gets its own 500 kB/s.
+  URL). A CDN answer of HTTP 474 means the IP didn't match (some exits use
+  several outbound IPs); pron-get then re-resolves on a new circuit and
+  resumes.
+- A Tor circuit carries about 0.5-1.5 MB/s, and more streams on one circuit
+  don't help. So `-x 4` (the default) fetches each mp4 in 8 MB pieces over 4
+  circuits, each resolving its own signed link: about 2.5x faster in testing.
+  Finished pieces are listed in a `.part.map` file next to the `.part`.
 - The site's onion address (`-onion`) was offline when tested (Nov 2026).
 - Interrupted downloads keep a `.part` file and resume on the next `install`.
 

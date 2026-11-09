@@ -23,6 +23,7 @@
 .Op Fl q Ar height
 .Op Fl hls
 .Op Fl j Ar n
+.Op Fl x Ar n
 .Op Fl limit Ar n
 .Op Fl search Ar words
 .Op Fl y
@@ -37,6 +38,7 @@
 .Cm upgrade
 .Op Fl q Ar height
 .Op Fl j Ar n
+.Op Fl x Ar n
 .Op Fl limit Ar n
 .Op Fl y
 .Nm pron-get
@@ -246,6 +248,16 @@ Run
 .Ar n
 downloads in parallel (at most 8).
 Each job has its own Tor client and circuits.
+.It Fl x Ar n
+Fetch each mp4 over
+.Ar n
+connections (default 4, at most 8), each on its own Tor circuit with its
+own signed media URL.
+Tor limits speed per circuit, so this is about
+.Ar n
+times faster.
+.Fl x Cm 1
+uses a single connection.
 .It Fl y
 Assume yes; do not prompt.
 .El
@@ -406,7 +418,9 @@ The site's onion service was offline in November 2026, so
 .Fl onion
 may not work.
 .Pp
-The CDN limits each download to about 500 kB/s; use
+One Tor circuit carries about 0.5 to 1.5 MB/s; see
+.Fl x
+and
 .Fl j .
 .Pp
 This manpage has been started.

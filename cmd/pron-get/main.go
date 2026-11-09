@@ -80,6 +80,7 @@ type opts struct {
 	search  string
 	limit   int
 	jobs    int
+	conns   int
 
 	sourcesPath string
 	indexPath   string
@@ -142,6 +143,7 @@ func main() {
 		fs.StringVar(&o.search, "search", "", "install the results of this search")
 		fs.IntVar(&o.limit, "limit", 3, "newest packages taken from each listing or search (0 = all)")
 		fs.IntVar(&o.jobs, "j", 1, "parallel downloads, each on its own Tor circuit (max 8)")
+		fs.IntVar(&o.conns, "x", 4, "connections per mp4 download, each on its own Tor circuit (max 8)")
 		fs.BoolVar(&o.yes, "y", false, "don't ask for confirmation")
 		fs.Parse(args)
 		ids, listings := parseTargets(fs.Args())
@@ -191,6 +193,7 @@ func main() {
 		fs.BoolVar(&o.hls, "hls", false, "prefer the HLS stream over the mp4 file")
 		fs.IntVar(&o.limit, "limit", 0, "install at most this many (0 = all)")
 		fs.IntVar(&o.jobs, "j", 1, "parallel downloads, each on its own Tor circuit (max 8)")
+		fs.IntVar(&o.conns, "x", 4, "connections per mp4 download, each on its own Tor circuit (max 8)")
 		fs.BoolVar(&o.yes, "y", false, "don't ask for confirmation")
 		fs.Parse(args)
 		st := store.Store{Root: o.dir}
@@ -585,6 +588,9 @@ func installOne(ctx context.Context, s worker, n int, id string, o opts) error {
 	for attempt := 1; ; attempt++ {
 		if f.Kind == "hls" {
 			out, err = fetch.HLS(ctx, s.tor.Client, f.URL, dst, o.quality, s.site.Headers(), bar.update)
+		} else if o.conns > 1 {
+			first := fetch.Source{Client: s.tor.Client, URL: f.URL}
+			out, err = dst, fetch.Parallel(ctx, first, s.resolver(id, f), min(o.conns, 8), dst, s.site.Headers(), bar.update)
 		} else {
 			out, err = dst, fetch.File(ctx, s.tor.Client, f.URL, dst, s.site.Headers(), bar.update)
 		}
@@ -622,6 +628,25 @@ func installOne(ctx context.Context, s worker, n int, id string, o opts) error {
 		SHA256:      sum,
 		InstalledAt: time.Now().UTC(),
 	})
+}
+
+// resolver gives each extra connection its own circuit and its own media URL,
+// since the CDN signs URLs for a single exit IP.
+func (s worker) resolver(id string, want pornhub.Format) fetch.Resolver {
+	return func(ctx context.Context) (fetch.Source, error) {
+		c := s.tor.Fork()
+		site := &pornhub.Client{HTTP: c.Client, Base: s.site.Base, NewCircuit: c.NewCircuit}
+		v, err := site.Video(ctx, id)
+		if err != nil {
+			return fetch.Source{}, err
+		}
+		for _, f := range v.Formats {
+			if f.Kind == want.Kind && f.Height == want.Height {
+				return fetch.Source{Client: c.Client, URL: f.URL}, nil
+			}
+		}
+		return fetch.Source{}, fmt.Errorf("%dp %s not offered on a new circuit", want.Height, want.Kind)
+	}
 }
 
 // prefer moves formats of the given kind to the front, keeping order.
@@ -724,6 +749,7 @@ func humanBytes(n int64) string {
 type progress struct {
 	kind    string
 	start   time.Time
+	base    int64 // bytes already on disk when the download (re)started
 	enabled bool
 	shown   bool
 }
@@ -736,12 +762,15 @@ func (p *progress) update(done, total int64) {
 	if !p.enabled {
 		return
 	}
+	if !p.shown {
+		p.base, p.start = done, time.Now()
+	}
 	p.shown = true
 	if p.kind == "hls" {
 		fmt.Fprintf(os.Stderr, "\r  %3d%% [segment %d/%d]   ", done*100/max(total, 1), done, total)
 		return
 	}
-	rate := float64(done) / max(time.Since(p.start).Seconds(), 0.001)
+	rate := float64(done-p.base) / max(time.Since(p.start).Seconds(), 0.001)
 	if total > 0 {
 		fmt.Fprintf(os.Stderr, "\r  %3d%% [%s/%s] %s/s   ", done*100/total, humanBytes(done), humanBytes(total), humanBytes(int64(rate)))
 	} else {
