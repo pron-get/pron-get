@@ -204,12 +204,14 @@ Default:
 Use this Tor SOCKS proxy.
 By default
 .Nm
-tries 127.0.0.1:9050 (a system tor) and 127.0.0.1:9150 (Tor Browser),
-then starts its own.
+starts its own tor, so a system tor or Tor Browser closing mid-download
+doesn't stop it.
 .It Fl tor-bin Ar path
 The
 .Xr tor 1
-binary to start when no proxy is running.
+binary to start when
+.Fl tor
+is not given.
 .It Fl sources Ar file
 The
 .Xr sources.list 5

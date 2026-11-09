@@ -250,11 +250,11 @@ PRON-GET(1)                 General Commands Manual                PRON-GET(1)
      <span class="b">-dir</span> <span class="u">dir</span>       Where packages are installed.  Default: <span class="u">~/pr0n</span>.
 
      <span class="b">-tor</span> <span class="u">host</span>:<span class="u">port</span>
-                    Use this Tor SOCKS proxy.  By default <span class="b">pron-get</span> tries
-                    127.0.0.1:9050 (a system tor) and 127.0.0.1:9150 (Tor
-                    Browser), then starts its own.
+                    Use this Tor SOCKS proxy.  By default <span class="b">pron-get</span> starts its
+                    own tor, so a system tor or Tor Browser closing mid-
+                    download doesn&#39;t stop it.
 
-     <span class="b">-tor-bin</span> <span class="u">path</span>  The tor(1) binary to start when no proxy is running.
+     <span class="b">-tor-bin</span> <span class="u">path</span>  The tor(1) binary to start when <span class="b">-tor</span> is not given.
 
      <span class="b">-sources</span> <span class="u">file</span>  The sources.list(5) to use.
 

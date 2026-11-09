@@ -109,10 +109,10 @@ $ pron-get upgrade -j 3
 
 ## Privacy model
 
-- **Tor or nothing.** All traffic goes through a SOCKS5 proxy: a system tor
-  (9050), Tor Browser (9150), or a private `tor` that pron-get starts and
-  stops itself. Before any request to the site, check.torproject.org must
-  confirm a Tor exit, or pron-get exits.
+- **Tor or nothing.** All traffic goes through a SOCKS5 proxy: a private
+  `tor` that pron-get starts and stops itself (about 5 seconds once its state
+  is cached), or the proxy you name with `-tor`. Before any request to the
+  site, check.torproject.org must confirm a Tor exit, or pron-get exits.
 - **No DNS leaks.** Hostnames are sent to Tor unresolved; the private tor runs
   with `SafeSocks 1`, which refuses requests that would have needed local DNS.
   `HTTP(S)_PROXY` and the system torrc are ignored.

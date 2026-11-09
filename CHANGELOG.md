@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- pron-get always starts its own tor unless `-tor` names a proxy. It no
+  longer picks up a system tor or Tor Browser on 9050/9150, so closing Tor
+  Browser can't stop a download.
+
 ## 0.7.1
 
 - Homebrew formula: stop passing `-s -w` twice (`std_go_args` already

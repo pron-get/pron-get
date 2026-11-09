@@ -88,8 +88,8 @@ type opts struct {
 
 func flags(name string, o *opts) *flag.FlagSet {
 	fs := flag.NewFlagSet(name, flag.ExitOnError)
-	fs.StringVar(&o.torAddr, "tor", "", "use this Tor SOCKS proxy (default: 127.0.0.1:9050/9150, else start a private tor)")
-	fs.StringVar(&o.torBin, "tor-bin", "tor", "tor binary to launch when no proxy is running")
+	fs.StringVar(&o.torAddr, "tor", "", "use this Tor SOCKS proxy (default: start a private tor)")
+	fs.StringVar(&o.torBin, "tor-bin", "tor", "tor binary to launch when -tor is not given")
 	fs.StringVar(&o.dir, "dir", store.DefaultRoot(), "where packages are installed")
 	fs.StringVar(&o.base, "site", pornhub.DefaultBase, "site base URL")
 	fs.BoolVar(&o.onion, "onion", false, "use the site's onion service instead of a Tor exit")
@@ -289,15 +289,10 @@ func parseIDs(args []string) []string {
 	return ids
 }
 
-// withTor connects to Tor (an existing proxy, or a private instance) and
+// withTor connects to Tor (a private instance, or the -tor proxy) and
 // refuses to continue unless check.torproject.org confirms a Tor exit.
 func withTor(ctx context.Context, o *opts, f func(*tor.Client) error) error {
 	addr := o.torAddr
-	if addr == "" {
-		if a, ok := tor.FindProxy(); ok {
-			addr = a
-		}
-	}
 	if addr == "" {
 		fmt.Fprintln(os.Stderr, "Starting private tor...")
 		p, err := tor.Launch(ctx, o.torBin, tor.DefaultDataDir(), io.Discard)

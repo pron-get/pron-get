@@ -18,21 +18,6 @@ import (
 	"time"
 )
 
-// KnownProxies are the usual SOCKS ports of a system tor and Tor Browser.
-var KnownProxies = []string{"127.0.0.1:9050", "127.0.0.1:9150"}
-
-// FindProxy returns the first known SOCKS port that accepts connections.
-func FindProxy() (string, bool) {
-	for _, addr := range KnownProxies {
-		c, err := net.DialTimeout("tcp", addr, 500*time.Millisecond)
-		if err == nil {
-			c.Close()
-			return addr, true
-		}
-	}
-	return "", false
-}
-
 // Process is a private tor instance started by pron-get.
 type Process struct {
 	Addr    string
