@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -112,7 +113,8 @@ func TestParallelResume(t *testing.T) {
 	if err := Parallel(context.Background(), src, resolve, 2, dst, nil, nil); err != nil {
 		t.Fatal(err)
 	}
-	if len(ranges) != 2 || ranges[0] != want[0] || ranges[1] != want[2] {
+	slices.Sort(ranges) // two workers: either may ask first
+	if len(ranges) != 2 || ranges[0] != want[2] || ranges[1] != want[0] {
 		t.Errorf("ranges = %v", ranges)
 	}
 	if got, _ := os.ReadFile(dst); !bytes.Equal(got, data) {
