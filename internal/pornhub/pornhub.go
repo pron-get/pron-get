@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -52,6 +53,10 @@ type Video struct {
 	Thumbnail string
 	PageURL   string
 	Formats   []Format // best first
+
+	// As listed under the player.
+	Categories []string
+	Tags       []string
 }
 
 // Format is one downloadable rendition.
@@ -286,6 +291,8 @@ var (
 	twitterTitle = regexp.MustCompile(`<meta[^>]+name=["']twitter:title["'][^>]+content=["']([^"']+)["']`)
 	h1Title      = regexp.MustCompile(`(?s)<h1[^>]+class=["']title["'][^>]*>(.+?)</h1>`)
 	authorRe     = regexp.MustCompile(`"author"\s*:\s*"([^"]+)"`)
+	categoryRe   = regexp.MustCompile(`<a[^>]+data-label="category"[^>]*>([^<]+)</a>`)
+	tagLinkRe    = regexp.MustCompile(`<a[^>]+data-label="tag"[^>]*>\s*(?:<span>)?([^<]+)<`)
 	tagRe        = regexp.MustCompile(`<[^>]+>`)
 	spaceRe      = regexp.MustCompile(`\s+`)
 	heightInURL  = regexp.MustCompile(`(\d{3,4})[pP]?_\d+[kK]`)
@@ -364,7 +371,20 @@ func parseVideoPage(body string) (*Video, []mediaDef, error) {
 	if m := authorRe.FindStringSubmatch(body); m != nil {
 		v.Uploader = cleanText(m[1])
 	}
+	v.Categories = allText(categoryRe, body)
+	v.Tags = allText(tagLinkRe, body)
 	return v, fv.MediaDefinitions, nil
+}
+
+// allText returns the cleaned first group of every match, without repeats.
+func allText(re *regexp.Regexp, body string) []string {
+	var out []string
+	for _, m := range re.FindAllStringSubmatch(body, -1) {
+		if t := cleanText(m[1]); t != "" && !slices.Contains(out, t) {
+			out = append(out, t)
+		}
+	}
+	return out
 }
 
 func makeFormat(u, format string, height int) Format {

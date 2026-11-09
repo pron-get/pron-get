@@ -140,11 +140,11 @@ PRON-GET(1)                 General Commands Manual                PRON-GET(1)
 <span class="b">SYNOPSIS</span>
      <span class="b">pron-get</span> <span class="b">search</span> [<span class="b">-page</span> <span class="u">n</span>] <span class="u">words</span> <span class="u">...</span> | <span class="u">listing-url</span>
      <span class="b">pron-get</span> <span class="b">show</span> <span class="u">package</span> | <span class="u">url</span>
-     <span class="b">pron-get</span> <span class="b">install</span> [<span class="b">-q</span> <span class="u">height</span>] [<span class="b">-hls</span>] [<span class="b">-j</span> <span class="u">n</span>] [<span class="b">-x</span> <span class="u">n</span>] [<span class="b">-limit</span> <span class="u">n</span>]
+     <span class="b">pron-get</span> <span class="b">install</span> [<span class="b">-q</span> <span class="u">height</span>] [<span class="b">-hls</span>] [<span class="b">-j</span> <span class="u">n</span>] [<span class="b">-x</span> <span class="u">n</span>] [<span class="b">-ukcpa</span>] [<span class="b">-limit</span> <span class="u">n</span>]
               [<span class="b">-search</span> <span class="u">words</span>] [<span class="b">-y</span>] <span class="u">package</span> | <span class="u">url</span> | <span class="u">listing-url</span> <span class="u">...</span>
      <span class="b">pron-get</span> <span class="b">remove</span> [<span class="b">-y</span>] <span class="u">package</span> <span class="u">...</span>
      <span class="b">pron-get</span> <span class="b">update</span>
-     <span class="b">pron-get</span> <span class="b">upgrade</span> [<span class="b">-q</span> <span class="u">height</span>] [<span class="b">-j</span> <span class="u">n</span>] [<span class="b">-x</span> <span class="u">n</span>] [<span class="b">-limit</span> <span class="u">n</span>] [<span class="b">-y</span>]
+     <span class="b">pron-get</span> <span class="b">upgrade</span> [<span class="b">-q</span> <span class="u">height</span>] [<span class="b">-j</span> <span class="u">n</span>] [<span class="b">-x</span> <span class="u">n</span>] [<span class="b">-ukcpa</span>] [<span class="b">-limit</span> <span class="u">n</span>] [<span class="b">-y</span>]
      <span class="b">pron-get</span> <span class="b">list</span> [<span class="b">-upgradable</span>]
      <span class="b">pron-get</span> <span class="b">add-source</span> <span class="u">listing-url</span> | <span class="b">search</span> <span class="u">words</span> [<span class="b">limit=</span><span class="u">n</span>]
      <span class="b">pron-get</span> <span class="b">edit-sources</span>
@@ -281,6 +281,20 @@ PRON-GET(1)                 General Commands Manual                PRON-GET(1)
                     each on its own Tor circuit with its own signed media URL.
                     Tor limits speed per circuit, so this is about <span class="u">n</span> times
                     faster.  <span class="b">-x</span> <span class="b">1</span> uses a single connection.
+
+     <span class="b">-ukcpa</span>         Skip videos whose title, tags or categories suggest one of
+                    the pornography offences in the Crime and Policing Act
+                    2026, in force in England and Wales from 6 November 2026:
+                    strangulation or suffocation, sex between relatives (step
+                    and foster relatives only where someone is portrayed as
+                    under 18), and someone portrayed as under 16.  The Act
+                    makes both possession and publication offences.
+
+                    This is a keyword filter, not a legal test.  The offences
+                    turn on what a reasonable person would think on seeing the
+                    images, so it misses some videos and skips some lawful
+                    ones.  It does not check packages that are already
+                    installed.
 
      <span class="b">-y</span>             Assume yes; do not prompt.
 
