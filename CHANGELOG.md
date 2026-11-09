@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.3
 
 - `install` and `upgrade` fetch each mp4 over 4 Tor circuits at once
   (`-x N`, `-x 1` for one). A 272 MB video took 133 s instead of about
