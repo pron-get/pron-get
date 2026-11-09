@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.1
+
+- Homebrew formula: stop passing `-s -w` twice (`std_go_args` already
+  adds them).
+
 ## 0.7.0
 
 First public release. A Go rewrite of porn-get (2001-2003); see HISTORY.md.

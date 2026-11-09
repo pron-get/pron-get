@@ -2,7 +2,7 @@
 // open in an xterm. It runs mandoc(1) for the text, so the page matches what
 // `man pron-get` prints, bold and underline included.
 //
-//	go run ./tools/manhtml -version 0.7.0 > docs/pron-get.1.html
+//	go run ./tools/manhtml -version 0.7.1 > docs/pron-get.1.html
 //
 // -fragment leaves out the <!doctype>/<html>/<head> wrapper, for hosts that
 // add their own.
