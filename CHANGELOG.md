@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.5
 
 - A download that stops receiving data for 60 s is dropped and tried
   again, instead of hanging forever. With `-x`, connections that run out
