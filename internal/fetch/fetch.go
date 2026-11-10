@@ -69,8 +69,62 @@ const StatusWrongIP = 474
 // when an exit uses several outbound addresses; resolve again on a new circuit.
 var ErrWrongIP = errors.New("media URL is bound to a different exit IP")
 
+// StallTimeout is how long a download may go without receiving any data
+// before its connection is dropped and the download tried again. A Tor
+// circuit can stop delivering without closing, and would otherwise hang.
+var StallTimeout = 60 * time.Second
+
+var errStalled = errors.New("download stalled")
+
+// stallGuard cancels a request whose body stops arriving. Reads through
+// reader push the deadline back.
+type stallGuard struct {
+	ctx   context.Context
+	stop  context.CancelCauseFunc
+	timer *time.Timer
+}
+
+func newStallGuard(ctx context.Context) *stallGuard {
+	ctx, cancel := context.WithCancelCause(ctx)
+	g := &stallGuard{ctx: ctx, stop: cancel}
+	g.timer = time.AfterFunc(StallTimeout, func() {
+		cancel(fmt.Errorf("%w: no data for %s", errStalled, StallTimeout))
+	})
+	return g
+}
+
+func (g *stallGuard) reader(r io.Reader) io.Reader { return stallReader{r, g.timer} }
+
+// err returns why the guard fired in place of err, if it did.
+func (g *stallGuard) err(err error) error {
+	if cause := context.Cause(g.ctx); err != nil && errors.Is(cause, errStalled) {
+		return cause
+	}
+	return err
+}
+
+func (g *stallGuard) close() {
+	g.timer.Stop()
+	g.stop(nil)
+}
+
+type stallReader struct {
+	r io.Reader
+	t *time.Timer
+}
+
+func (s stallReader) Read(p []byte) (int, error) {
+	n, err := s.r.Read(p)
+	if n > 0 {
+		s.t.Reset(StallTimeout)
+	}
+	return n, err
+}
+
 func fileOnce(ctx context.Context, c Getter, url, part string, offset int64, h http.Header, progress Progress) (bool, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	g := newStallGuard(ctx)
+	defer g.close()
+	req, err := http.NewRequestWithContext(g.ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return false, permanentError{err}
 	}
@@ -82,7 +136,7 @@ func fileOnce(ctx context.Context, c Getter, url, part string, offset int64, h h
 	}
 	resp, err := c.Do(req)
 	if err != nil {
-		return false, err
+		return false, g.err(err)
 	}
 	defer resp.Body.Close()
 
@@ -121,8 +175,8 @@ func fileOnce(ctx context.Context, c Getter, url, part string, offset int64, h h
 	}
 	defer f.Close()
 	w := &countingWriter{w: f, n: offset, total: total, progress: progress}
-	if _, err := io.Copy(w, resp.Body); err != nil {
-		return false, err
+	if _, err := io.Copy(w, g.reader(resp.Body)); err != nil {
+		return false, g.err(err)
 	}
 	if total >= 0 && w.n != total {
 		return false, fmt.Errorf("short download: %d of %d bytes", w.n, total)

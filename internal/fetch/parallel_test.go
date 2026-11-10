@@ -148,3 +148,106 @@ func TestParallelGivesUp(t *testing.T) {
 		t.Fatalf("err = %v", err)
 	}
 }
+
+// stallingServer serves data with Range support, except that the first
+// request for want sends a little and then goes silent without closing,
+// like a Tor circuit that stops delivering.
+func stallingServer(t *testing.T, data []byte, want string) *httptest.Server {
+	var stalled atomic.Bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Range") == want && stalled.CompareAndSwap(false, true) {
+			http.ServeContent(&stallWriter{ResponseWriter: w, left: 1000}, r, "v.mp4", time.Time{}, bytes.NewReader(data))
+			<-r.Context().Done()
+			return
+		}
+		http.ServeContent(w, r, "v.mp4", time.Time{}, bytes.NewReader(data))
+	}))
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+// stallWriter passes on the first left bytes of the body, then blocks
+// until the client goes away.
+type stallWriter struct {
+	http.ResponseWriter
+	left int
+}
+
+func (s *stallWriter) Write(p []byte) (int, error) {
+	if s.left <= 0 {
+		return 0, http.ErrHandlerTimeout // stop ServeContent; the handler then waits
+	}
+	n := min(len(p), s.left)
+	s.left -= n
+	n, err := s.ResponseWriter.Write(p[:n])
+	s.ResponseWriter.(http.Flusher).Flush()
+	return n, err
+}
+
+func shortStall(t *testing.T) {
+	old := StallTimeout
+	StallTimeout = 300 * time.Millisecond
+	t.Cleanup(func() { StallTimeout = old })
+}
+
+func TestParallelStall(t *testing.T) {
+	shortStall(t)
+	data := testData(4*ChunkSize + 99)
+	// A full piece near the end, so the other workers have run out of work
+	// by the time it stalls and must wait for it.
+	srv := stallingServer(t, data, fmt.Sprintf("bytes=%d-%d", 3*ChunkSize, 4*ChunkSize-1))
+	resolve := func(context.Context) (Source, error) {
+		return Source{srv.Client(), srv.URL + "/v.mp4"}, nil
+	}
+	dst := filepath.Join(t.TempDir(), "v.mp4")
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	if err := Parallel(ctx, Source{srv.Client(), srv.URL + "/v.mp4"}, resolve, 4, dst, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := os.ReadFile(dst); !bytes.Equal(got, data) {
+		t.Fatalf("content mismatch: %d bytes", len(got))
+	}
+}
+
+func TestFileStall(t *testing.T) {
+	shortStall(t)
+	data := testData(50000)
+	srv := stallingServer(t, data, "")
+	dst := filepath.Join(t.TempDir(), "v.mp4")
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	if err := File(ctx, srv.Client(), srv.URL+"/v.mp4", dst, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := os.ReadFile(dst); !bytes.Equal(got, data) {
+		t.Fatalf("content mismatch: %d bytes", len(got))
+	}
+}
+
+func TestChunkQueueWaitsForInflight(t *testing.T) {
+	q := newChunkQueue()
+	q.put(0)
+	c, _ := q.take(context.Background())
+	got := make(chan int)
+	go func() {
+		c, ok := q.take(context.Background())
+		if !ok {
+			c = -1
+		}
+		got <- c
+	}()
+	select {
+	case c := <-got:
+		t.Fatalf("take returned %d while a piece was in flight", c)
+	case <-time.After(50 * time.Millisecond):
+	}
+	q.retry(c)
+	if c := <-got; c != 0 {
+		t.Fatalf("take got %d, want the retried piece 0", c)
+	}
+	q.done()
+	if _, ok := q.take(context.Background()); ok {
+		t.Fatal("take succeeded on an empty, idle queue")
+	}
+}

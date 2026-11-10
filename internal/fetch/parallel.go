@@ -84,7 +84,8 @@ func Parallel(ctx context.Context, first Source, resolve Resolver, n int, dst st
 	}
 
 	nChunks := int((total + ChunkSize - 1) / ChunkSize)
-	q := &chunkQueue{}
+	q := newChunkQueue()
+	defer context.AfterFunc(ctx, q.wake)()
 	var have int64
 	for c := 0; c < nChunks; c++ {
 		if done[c] {
@@ -138,6 +139,8 @@ func Parallel(ctx context.Context, first Source, resolve Resolver, n int, dst st
 // pullChunks is one connection's loop: take a piece, fetch it, record it.
 // Worker 0 starts on first; the others resolve their own Source. A refused
 // URL (wrong exit IP, expired) or repeated errors move it to a new circuit.
+// A worker with nothing to take waits while other pieces are in flight, so
+// a piece another worker gives up on is picked up again.
 func pullChunks(ctx context.Context, f *os.File, q *chunkQueue, w int, first Source, resolve Resolver, total int64, h http.Header, pr *sharedProgress, record func(int) error) error {
 	src := first
 	if w > 0 {
@@ -148,7 +151,7 @@ func pullChunks(ctx context.Context, f *os.File, q *chunkQueue, w int, first Sou
 	}
 	failures, circuits := 0, 1
 	for {
-		c, ok := q.take()
+		c, ok := q.take(ctx)
 		if !ok {
 			return nil
 		}
@@ -156,12 +159,13 @@ func pullChunks(ctx context.Context, f *os.File, q *chunkQueue, w int, first Sou
 		if err == nil {
 			failures = 0
 			if err := record(c); err != nil {
-				q.put(c)
+				q.retry(c)
 				return err
 			}
+			q.done()
 			continue
 		}
-		q.put(c)
+		q.retry(c)
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
@@ -187,7 +191,9 @@ func pullChunks(ctx context.Context, f *os.File, q *chunkQueue, w int, first Sou
 func fetchChunk(ctx context.Context, src Source, f *os.File, c int, total int64, h http.Header, pr *sharedProgress) error {
 	start := int64(c) * ChunkSize
 	n := chunkLen(c, total)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, src.URL, nil)
+	g := newStallGuard(ctx)
+	defer g.close()
+	req, err := http.NewRequestWithContext(g.ctx, http.MethodGet, src.URL, nil)
 	if err != nil {
 		return permanentError{err}
 	}
@@ -197,14 +203,15 @@ func fetchChunk(ctx context.Context, src Source, f *os.File, c int, total int64,
 	req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", start, start+n-1))
 	resp, err := src.Client.Do(req)
 	if err != nil {
-		return err
+		return g.err(err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusPartialContent {
 		return statusError(resp)
 	}
 	w := &offsetWriter{f: f, off: start, pr: pr}
-	got, err := io.Copy(w, io.LimitReader(resp.Body, n))
+	got, err := io.Copy(w, io.LimitReader(g.reader(resp.Body), n))
+	err = g.err(err)
 	if err == nil && got != n {
 		err = fmt.Errorf("short piece: %d of %d bytes", got, n)
 	}
@@ -295,9 +302,19 @@ func chunkLen(c int, total int64) int64 {
 	return min(ChunkSize, total-int64(c)*ChunkSize)
 }
 
+// chunkQueue holds the pieces not yet downloaded, and counts the ones being
+// fetched now.
 type chunkQueue struct {
-	mu sync.Mutex
-	cs []int
+	mu       sync.Mutex
+	cond     *sync.Cond
+	cs       []int
+	inflight int
+}
+
+func newChunkQueue() *chunkQueue {
+	q := &chunkQueue{}
+	q.cond = sync.NewCond(&q.mu)
+	return q
 }
 
 func (q *chunkQueue) put(c int) {
@@ -306,12 +323,41 @@ func (q *chunkQueue) put(c int) {
 	q.mu.Unlock()
 }
 
+// retry returns a taken piece to the queue.
+func (q *chunkQueue) retry(c int) {
+	q.mu.Lock()
+	q.cs = append(q.cs, c)
+	q.inflight--
+	q.mu.Unlock()
+	q.cond.Broadcast()
+}
+
+// done marks a taken piece finished.
+func (q *chunkQueue) done() {
+	q.mu.Lock()
+	q.inflight--
+	q.mu.Unlock()
+	q.cond.Broadcast()
+}
+
+// wake makes waiting takers look again (after ctx is cancelled).
+func (q *chunkQueue) wake() {
+	q.mu.Lock()
+	q.mu.Unlock()
+	q.cond.Broadcast()
+}
+
 // take returns the lowest-numbered piece left, so the file fills from the
-// front and a partial download is mostly playable.
-func (q *chunkQueue) take() (int, bool) {
+// front and a partial download is mostly playable. While the queue is empty
+// but pieces are in flight it waits, in case one comes back. It returns
+// false when every piece is done, or ctx is cancelled.
+func (q *chunkQueue) take(ctx context.Context) (int, bool) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	if len(q.cs) == 0 {
+	for len(q.cs) == 0 && q.inflight > 0 && ctx.Err() == nil {
+		q.cond.Wait()
+	}
+	if len(q.cs) == 0 || ctx.Err() != nil {
 		return 0, false
 	}
 	low := 0
@@ -322,6 +368,7 @@ func (q *chunkQueue) take() (int, bool) {
 	}
 	c := q.cs[low]
 	q.cs = append(q.cs[:low], q.cs[low+1:]...)
+	q.inflight++
 	return c, true
 }
 

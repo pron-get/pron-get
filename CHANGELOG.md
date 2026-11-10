@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- A download that stops receiving data for 60 s is dropped and tried
+  again, instead of hanging forever. With `-x`, connections that run out
+  of pieces wait for the rest, and take over any piece another connection
+  gives up on.
+
 ## 0.7.4
 
 0.7.3 was tagged but never released: its build failed on a flaky test.
