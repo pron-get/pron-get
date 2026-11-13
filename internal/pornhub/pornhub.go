@@ -18,7 +18,12 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
+
+// PageTimeout bounds each page or JSON request, body included. A Tor
+// circuit can stop delivering without closing, and would otherwise hang.
+var PageTimeout = 2 * time.Minute
 
 const (
 	// DefaultBase is the clearnet site, reached through a Tor exit.
@@ -200,6 +205,8 @@ func (c *Client) getPage(ctx context.Context, u string) (string, *url.URL, error
 }
 
 func (c *Client) get(ctx context.Context, u string) (string, *url.URL, error) {
+	ctx, cancel := context.WithTimeout(ctx, PageTimeout)
+	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return "", nil, err
@@ -227,6 +234,8 @@ func (c *Client) get(ctx context.Context, u string) (string, *url.URL, error) {
 }
 
 func (c *Client) getJSON(ctx context.Context, u string, v any) error {
+	ctx, cancel := context.WithTimeout(ctx, PageTimeout)
+	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return err

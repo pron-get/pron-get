@@ -225,6 +225,22 @@ func TestFileStall(t *testing.T) {
 	}
 }
 
+// An HLS segment (or playlist) whose body stops arriving is fetched again.
+func TestGetBytesStall(t *testing.T) {
+	shortStall(t)
+	data := testData(50000)
+	srv := stallingServer(t, data, "")
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	got, err := getBytesRetry(ctx, srv.Client(), srv.URL+"/seg.ts", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got, data) {
+		t.Fatalf("content mismatch: %d bytes", len(got))
+	}
+}
+
 func TestChunkQueueWaitsForInflight(t *testing.T) {
 	q := newChunkQueue()
 	q.put(0)

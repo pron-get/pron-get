@@ -7,7 +7,9 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func TestListingPath(t *testing.T) {
@@ -136,5 +138,37 @@ func TestList(t *testing.T) {
 	}
 	if _, err := c.List(ctx, "/model/nobody/videos", 0, nil); err == nil || !strings.Contains(err.Error(), "not found") {
 		t.Fatalf("missing listing: %v", err)
+	}
+}
+
+// A page whose body stops arriving is given up on and fetched again,
+// instead of hanging the listing for good.
+func TestPageStall(t *testing.T) {
+	old := PageTimeout
+	PageTimeout = 300 * time.Millisecond
+	t.Cleanup(func() { PageTimeout = old })
+
+	var stalled atomic.Bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `<div class="container">`)
+		if stalled.CompareAndSwap(false, true) {
+			w.(http.Flusher).Flush()
+			<-r.Context().Done()
+			return
+		}
+		fmt.Fprint(w, tiles(0, 5))
+	}))
+	defer srv.Close()
+	circuits := 0
+	c := &Client{HTTP: srv.Client(), Base: srv.URL, NewCircuit: func() { circuits++ }}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	rs, err := c.List(ctx, "/model/m/videos", 5, nil)
+	if err != nil || len(rs) != 5 {
+		t.Fatalf("%d results, %v (want 5 after a retry)", len(rs), err)
+	}
+	if circuits != 1 {
+		t.Errorf("%d new circuits, want 1", circuits)
 	}
 }

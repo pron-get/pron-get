@@ -80,6 +80,8 @@ var ErrNotTor = errors.New("traffic is NOT going through Tor")
 
 // Verify asks check.torproject.org whether our requests arrive from a Tor exit.
 func (c *Client) Verify(ctx context.Context) (*CheckResult, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://check.torproject.org/api/ip", nil)
 	if err != nil {
 		return nil, err

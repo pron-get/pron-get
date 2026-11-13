@@ -405,7 +405,9 @@ func getBytesRetry(ctx context.Context, c Getter, u string, h http.Header) ([]by
 }
 
 func getBytes(ctx context.Context, c Getter, u string, h http.Header) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+	g := newStallGuard(ctx)
+	defer g.close()
+	req, err := http.NewRequestWithContext(g.ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -414,7 +416,7 @@ func getBytes(ctx context.Context, c Getter, u string, h http.Header) ([]byte, e
 	}
 	resp, err := c.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, g.err(err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == StatusWrongIP {
@@ -423,7 +425,8 @@ func getBytes(ctx context.Context, c Getter, u string, h http.Header) ([]byte, e
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("%s", resp.Status)
 	}
-	return io.ReadAll(io.LimitReader(resp.Body, 256<<20))
+	b, err := io.ReadAll(io.LimitReader(g.reader(resp.Body), 256<<20))
+	return b, g.err(err)
 }
 
 func readState(path string) (int, int64) {
