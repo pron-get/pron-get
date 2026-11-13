@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.6
+
+- Page, playlist and Tor-check requests that stop receiving data for
+  2 minutes are dropped and retried on a new circuit, instead of hanging
+  forever.
+
 ## 0.7.5
 
 - A download that stops receiving data for 60 s is dropped and tried
